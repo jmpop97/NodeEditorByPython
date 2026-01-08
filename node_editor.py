@@ -3,8 +3,9 @@ from tkinter import Canvas, ttk
 from funtions.TestNode import TestNode
 import os
 import importlib
-from Node import Node,BaseNode
+from NodeView.Node import Node, BaseNode
 from typing import Optional  # Add this import at the top of the file
+from NodeListView.NodeListView import NodeListView
 class NodeEditor(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -18,55 +19,13 @@ class NodeEditor(tk.Tk):
         # Add frames to the PanedWindow
         self.right_frame = RightFrame(self.paned_window, self)  # Pass self as parent
         self.center_frame = CenterFrame(self.paned_window, self)  # Pass self as parent
-        self.left_frame = LeftFrame(self.paned_window, self)  # Pass self as parent
+        self.left_frame = NodeListView(self.paned_window, self)  # Pass self as parent
 
         self.paned_window.add(self.left_frame, stretch="always")
         self.paned_window.add(self.center_frame, stretch="always")
         self.paned_window.add(self.right_frame, stretch="always")
-class LeftFrame(tk.Frame):
-    def __init__(self, parent, app:NodeEditor):  # Pass app as parent
-        super().__init__(parent, width=200, bg="lightgray")
-        self.parent = app  # Store the reference to the app
-        self.pack_propagate(False)
 
-        # Add a Treeview widget to the left frame for the node list
-        self.tree = ttk.Treeview(self, columns=("Type", "Description"), show="headings")
-        self.tree.heading("Type", text="Type")
-        self.tree.heading("Description", text="Description")
-        self.tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
-        # Dynamically load node types from the funtions directory
-        self.sample_data = self.load_node_data()
-        for item in self.sample_data:
-            self.tree.insert("", "end", values=item)
-
-        # Bind Treeview selection event
-        self.tree.bind("<Double-1>", self.on_item_double_click)
-
-    def load_node_data(self):
-        node_data = []
-        funtions_dir = os.path.join(os.path.dirname(__file__), "funtions")
-        for filename in os.listdir(funtions_dir):
-            if filename.endswith("Node.py"):
-                module_name = f"funtions.{filename[:-3]}"
-                module = importlib.import_module(module_name)
-                node_class = getattr(module, filename[:-3])
-                node_instance = node_class()
-                node_data.append((filename[:-3], node_instance.description, node_class))
-        return node_data
-
-    def on_item_double_click(self, event):
-        # Get selected item
-        selected_item = self.tree.selection()
-        if selected_item:
-            node_name = self.tree.item(selected_item[0], "values")[0]
-            node_id = f"node_{len(self.parent.center_frame.nodes) + 1}"
-            # Find the node_class from sample_data
-            for item in self.sample_data:
-                if item[0] == node_name:
-                    node_class = item[2]
-                    break
-            self.parent.center_frame.add_node(node_id, node_class)
 
 class CenterFrame(tk.Frame):
     def __init__(self, parent, app:NodeEditor):  # Pass app as parent
@@ -81,8 +40,12 @@ class CenterFrame(tk.Frame):
         # Store references to nodes
         self.nodes = {}
         self.selected_node: Optional[Node] = None
+        self.selected_pin = None  # Track the currently selected pin
         self.offset_x = 0
         self.offset_y = 0
+
+        # Store connections
+        self.connections = []  # List to store connections as tuples (start_pin, end_pin, line_id)
 
         # Bind mouse events for node interaction
         self.canvas.bind("<Button-1>", self.on_canvas_click)
@@ -94,6 +57,34 @@ class CenterFrame(tk.Frame):
         x1, y1, x2, y2 = 50, 50, 150, 100
         node = Node(self.canvas, node_id, node_class(), x1, y1, x2, y2, num_inputs, num_outputs)
         self.nodes[node_id] = node
+
+    def connect_pins(self, start_pin, end_pin):
+        # Ensure no duplicate connections
+        for connection in self.connections:
+            if (connection[0] == start_pin and connection[1] == end_pin) or \
+               (connection[0] == end_pin and connection[1] == start_pin):
+                return  # Connection already exists
+
+        # Draw a line between the two pins
+        start_coords = self.canvas.coords(start_pin)
+        end_coords = self.canvas.coords(end_pin)
+        line_id = self.canvas.create_line(
+            (start_coords[0] + start_coords[2]) // 2,
+            (start_coords[1] + start_coords[3]) // 2,
+            (end_coords[0] + end_coords[2]) // 2,
+            (end_coords[1] + end_coords[3]) // 2,
+            fill="black",
+            width=2
+        )
+        self.connections.append((start_pin, end_pin, line_id))
+
+    def remove_connection(self, pin):
+        # Remove connections associated with a pin
+        for connection in self.connections[:]:
+            start_pin, end_pin, line_id = connection
+            if pin == start_pin or pin == end_pin:
+                self.canvas.delete(line_id)  # Delete the line
+                self.connections.remove(connection)
 
     def on_canvas_click(self, event):
         # Detect if a node's rect is clicked, prioritize the topmost node
@@ -132,6 +123,15 @@ class CenterFrame(tk.Frame):
 
     def on_release(self, event):
         self.selected_node = None
+
+    def on_pin_click(self, pin):
+        if self.selected_pin is None:
+            # Start a new connection
+            self.selected_pin = pin
+        else:
+            # Complete the connection
+            self.connect_pins(self.selected_pin, pin)
+            self.selected_pin = None
 
 class RightFrame(tk.Frame):
     def __init__(self, parent, app:NodeEditor):  # Pass app as parent

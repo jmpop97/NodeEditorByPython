@@ -1,4 +1,4 @@
-from Node import BaseNode
+from NodeView.Node import BaseNode
 
 class AddNode(BaseNode):
     def __init__(self):
@@ -16,5 +16,5 @@ class AddNode(BaseNode):
         input1 = self.values["input1"]["value"]
         input2 = self.values["input2"]["value"]
         self.outputs = {
-            "output": input1 + input2,
+            "output": int(input1) + int(input2),
         }
