@@ -4,6 +4,7 @@ from funtions.TestNode import TestNode
 import os
 import importlib
 from NodeView.Node import Node, BaseNode
+from NodeView.CenterFrame import CenterFrame
 from typing import Optional  # Add this import at the top of the file
 from NodeListView.NodeListView import NodeListView
 class NodeEditor(tk.Tk):
@@ -27,111 +28,6 @@ class NodeEditor(tk.Tk):
 
 
 
-class CenterFrame(tk.Frame):
-    def __init__(self, parent, app:NodeEditor):  # Pass app as parent
-        super().__init__(parent, width=200, bg="white")
-        self.parent = app  # Store the reference to the app
-        self.pack_propagate(False)
-
-        # Add a canvas to draw nodes
-        self.canvas = Canvas(self, bg="gray")
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-
-        # Store references to nodes
-        self.nodes = {}
-        self.selected_node: Optional[Node] = None
-        self.selected_pin = None  # Track the currently selected pin
-        self.offset_x = 0
-        self.offset_y = 0
-
-        # Store connections
-        self.connections = []  # List to store connections as tuples (start_pin, end_pin, line_id)
-
-        # Bind mouse events for node interaction
-        self.canvas.bind("<Button-1>", self.on_canvas_click)
-        self.canvas.bind("<B1-Motion>", self.on_node_drag)
-        self.canvas.bind("<ButtonRelease-1>", self.on_release)
-
-    def add_node(self, node_id, node_class, num_inputs=1, num_outputs=1):
-        # Create a new Node instance with multiple input and output pins
-        x1, y1, x2, y2 = 50, 50, 150, 100
-        node = Node(self.canvas, node_id, node_class(), x1, y1, x2, y2, num_inputs, num_outputs)
-        self.nodes[node_id] = node
-
-    def connect_pins(self, start_pin, end_pin):
-        # Ensure no duplicate connections
-        for connection in self.connections:
-            if (connection[0] == start_pin and connection[1] == end_pin) or \
-               (connection[0] == end_pin and connection[1] == start_pin):
-                return  # Connection already exists
-
-        # Draw a line between the two pins
-        start_coords = self.canvas.coords(start_pin)
-        end_coords = self.canvas.coords(end_pin)
-        line_id = self.canvas.create_line(
-            (start_coords[0] + start_coords[2]) // 2,
-            (start_coords[1] + start_coords[3]) // 2,
-            (end_coords[0] + end_coords[2]) // 2,
-            (end_coords[1] + end_coords[3]) // 2,
-            fill="black",
-            width=2
-        )
-        self.connections.append((start_pin, end_pin, line_id))
-
-    def remove_connection(self, pin):
-        # Remove connections associated with a pin
-        for connection in self.connections[:]:
-            start_pin, end_pin, line_id = connection
-            if pin == start_pin or pin == end_pin:
-                self.canvas.delete(line_id)  # Delete the line
-                self.connections.remove(connection)
-
-    def on_canvas_click(self, event):
-        # Detect if a node's rect is clicked, prioritize the topmost node
-        overlapping_items = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
-        self.selected_node = None  # Reset selected node
-
-        for item in reversed(overlapping_items):  # Check from topmost to bottommost
-            for node_id, node in self.nodes.items():
-                if item == node.rect and node.is_inside(event.x, event.y):
-                    self.selected_node = node
-                    coords = node.get_coords()
-                    self.offset_x = event.x - coords[0]
-                    self.offset_y = event.y - coords[1]
-
-                    # Highlight the selected node
-                    self.canvas.itemconfig(node.rect, outline="blue", width=3)
-
-                    # Notify RightFrame about the selected node
-                    if self.selected_node:
-                        self.parent.right_frame.update_node_details(self.selected_node.node)
-                    break
-
-        # Reset all unselected nodes to default appearance
-        for node_id, node in self.nodes.items():
-            if node != self.selected_node:
-                self.canvas.itemconfig(node.rect, outline="black", width=1)
-
-    def on_node_drag(self, event):
-        if self.selected_node:  # Only move if a node is selected
-            # Move the selected node
-            x, y = event.x - self.offset_x, event.y - self.offset_y
-            coords = self.selected_node.get_coords()
-            dx = x - coords[0]
-            dy = y - coords[1]
-            self.selected_node.move(dx, dy)
-
-    def on_release(self, event):
-        self.selected_node = None
-
-    def on_pin_click(self, pin):
-        if self.selected_pin is None:
-            # Start a new connection
-            self.selected_pin = pin
-        else:
-            # Complete the connection
-            self.connect_pins(self.selected_pin, pin)
-            self.selected_pin = None
 
 class RightFrame(tk.Frame):
     def __init__(self, parent, app:NodeEditor):  # Pass app as parent
