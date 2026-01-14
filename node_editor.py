@@ -7,7 +7,7 @@ from NodeView.Node import Node, BaseNode
 from NodeView.CenterFrame import CenterFrame
 from typing import Optional  # Add this import at the top of the file
 from NodeListView.NodeListView import NodeListView
-from RightFrame.RightFrame import RightFrame
+from NodeDetailView.RightFrame import RightFrame
 class NodeEditor(tk.Tk):
     def __init__(self):
         super().__init__()

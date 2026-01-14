@@ -6,7 +6,7 @@ from NodeView.Node import BaseNode  # Ensure this import is correct
 
 class NodeListView(tk.Frame):
     def __init__(self, parent, app):  # Pass app as parent
-        super().__init__(parent, width=200, bg="lightgray")
+        super().__init__(parent, width=100, bg="lightgray")
         self.parent = app  # Store the reference to the app
         self.pack_propagate(False)
 
@@ -14,6 +14,9 @@ class NodeListView(tk.Frame):
         self.tree = ttk.Treeview(self, columns=("Type", "Description"), show="headings")
         self.tree.heading("Type", text="Type")
         self.tree.heading("Description", text="Description")
+        # Set column widths to fit 10 characters (approx 80 pixels for typical font)
+        self.tree.column("Type", width=50, minwidth=50, anchor="w")
+        self.tree.column("Description", width=50, minwidth=50, anchor="w")
         self.tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # Dynamically load node types from the funtions directory
