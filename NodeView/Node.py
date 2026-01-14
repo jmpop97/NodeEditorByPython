@@ -1,3 +1,5 @@
+
+import tkinter as tk
 from typing import Optional
 
 class BaseNode:
@@ -5,7 +7,7 @@ class BaseNode:
         self.description = ""
         self.nodeName = ""
         self.values = {
-            # "input1": {"value": 0, "display": True},
+            # "input1": {"value": 0, "display": True,"type":"int"},
         }
         self.outputs = {
             # "output1": 0,
@@ -13,6 +15,56 @@ class BaseNode:
         self.nodeUI: Optional[Node] = None
     def functions(self):
         pass
+    def updateNodeDetailUi(self, right_frame=None):
+        """
+        Update the UI in the given RightFrame to reflect this node's details.
+        """
+        if right_frame is None:
+            return
+        right_frame.node_name_textbox.delete(0, right_frame.node_name_textbox.get().__len__())
+        right_frame.node_name_textbox.delete(0, 'end')
+        right_frame.node_name_textbox.insert(0, self.nodeName)
+        right_frame.description_textbox.delete(0, 'end')
+        right_frame.description_textbox.insert(0, self.description)
+        for widget in right_frame.middle_section.winfo_children():
+            widget.destroy()
+        right_frame.value_widgets.clear()
+        for widget in right_frame.bottom_section.winfo_children():
+            widget.destroy()
+        right_frame.output_labels.clear()
+        for key, value in self.values.items():
+            frame = tk.Frame(right_frame.middle_section, bg="lightyellow")
+            frame.pack(fill=tk.X, padx=5, pady=2)
+            check_var = tk.BooleanVar(value=value.get("display", False))
+            check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow")
+            check_button.pack(side=tk.LEFT)
+            label = tk.Label(frame, text=key, bg="lightyellow")
+            label.pack(side=tk.LEFT, padx=5)
+            text_frame = tk.Frame(frame, bg="lightyellow")
+            text_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            text_widget = tk.Text(text_frame, height=5, wrap="none")
+            text_widget.insert("1.0", value.get("value", ""))
+            # Vertical scrollbar (right)
+            v_scrollbar = tk.Scrollbar(text_frame, orient="vertical", command=text_widget.yview)
+            v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            # Horizontal scrollbar (bottom, spans under the text widget)
+            h_scrollbar = tk.Scrollbar(text_frame, orient="horizontal", command=text_widget.xview)
+            h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+            text_widget.config(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+            text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            def _resize_text(event, text_widget=text_widget):
+                text_widget.config(width=max(10, int(text_widget.winfo_width() / 8)), height=5)
+            text_frame.bind("<Configure>", _resize_text)
+            def on_text_change(event, key=key, text_widget=text_widget):
+                if right_frame.node:
+                    right_frame.update_node_value(key, text_widget.get("1.0", tk.END).rstrip("\n"))
+            text_widget.bind("<KeyRelease>", on_text_change)
+            check_var.trace_add("write", lambda *args, key=key, check_var=check_var: right_frame.update_node_display(key, check_var.get()) if right_frame.node else None)
+            right_frame.value_widgets[key] = (text_widget, check_var)
+        for key, value in self.outputs.items():
+            label = tk.Label(right_frame.bottom_section, text=f"{key}: {value}", bg="lightpink")
+            label.pack(fill=tk.X, padx=5, pady=2)
+            right_frame.output_labels[key] = label
 
 
 class Node:
@@ -116,7 +168,6 @@ class Node:
         try:
             self.nodeClass.functions()
             for input_node,dic in self.ChildNode.items():
-                print(input_node.nodeClass.values,dic)
                 for output,inputList in dic.items():
                     for input in inputList:
                         input_node.nodeClass.values[input]["value"]=self.nodeClass.outputs[output]

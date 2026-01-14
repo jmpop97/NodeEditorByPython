@@ -5,8 +5,8 @@ class AddNode(BaseNode):
         self.description = "Addition of two numbers"
         self.nodeName = "Add"
         self.values = {
-            "input1": {"value": 0, "display": True},
-            "input2": {"value": 0, "display": True},
+            "input1": { "display": True,"value": 0,"type":"int"},
+            "input2": { "display": True,"value": 0,"type":"int"},
         }
         self.outputs = {
             "output": 0,
@@ -16,5 +16,5 @@ class AddNode(BaseNode):
         input1 = self.values["input1"]["value"]
         input2 = self.values["input2"]["value"]
         self.outputs = {
-            "output": int(input1) + int(input2),
+            "output": input1 + input2,
         }

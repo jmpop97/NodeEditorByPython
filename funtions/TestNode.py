@@ -4,9 +4,9 @@ class TestNode(BaseNode):
         self.description = "test"
         self.nodeName="test"
         self.values = {
-            "input1": {"value": 1, "display": True},
-            "input2": {"value": 2, "display": True},
-            "input3": {"value": 3, "display": True},
+            "input1": { "display": True,"value": 1,"type":"int"},
+            "input2": { "display": True,"value": 2,"type":"int"},
+            "input3": { "display": True,"value": 3,"type":"int"},
         }
         self.outputs = {
             "output1": 1,
