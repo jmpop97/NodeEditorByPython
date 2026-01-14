@@ -1,86 +1,53 @@
 from NodeView.Node import BaseNode
+import tkinter as tk
 import requests
+import json
 
 class RequestNode(BaseNode):
     def __init__(self) -> None:
-        self.description = "요청"
-        self.nodeName = "RequestNode"
+        self.description = "request"
+        self.nodeName = "Request"
         self.values = {
-            "text": {
-                "value": """GET /api/v1/players/PEACEANDCHIPS/profile HTTP/2
-Host: er.dakgg.io
-Sec-Ch-Ua: "Chromium";v="143", "Not A(Brand";v="24"
-Sec-Ch-Ua-Mobile: ?0
-Sec-Ch-Ua-Platform: "Windows"
-Accept-Language: ko-KR,ko;q=0.9
-Upgrade-Insecure-Requests: 1
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-Sec-Fetch-Site: none
-Sec-Fetch-Mode: navigate
-Sec-Fetch-User: ?1
-Sec-Fetch-Dest: document
-Accept-Encoding: gzip, deflate, br
-Priority: u=0, i
-Connection: keep-alive
-
-""", 
-                "display": True},
-            "parsed": {"value": {}, "display": False},
+            "method": {
+                "value": "",
+                "display": True,
+                "type": "text"
+            },
+            "url": {
+                "value": "",
+                "display": True,
+                "type": "text"
+            },
+            "headers": {
+                "value": "",
+                "display": True,
+                "type": "text"
+            },
+            "data": {
+                "value": "",
+                "display": True,
+                "type": "text"
+            },
         }
         self.outputs = {
-            "output1": "",
+            "response": "",
         }
 
     def functions(self):
-        # Parse the POST body text into a dict and store in values["parsed"]
-        request = self.values["text"]["value"]
-        # Split request into headers and body
         try:
-            header_part, post_body = request.split("\n\n", 1)
-        except ValueError:
-            header_part, post_body = request, ""
-        # Parse request line and headers
-        lines = header_part.split("\n")
-        request_line = lines[0]
-        headers = {}
-        for line in lines[1:]:
-            if ':' in line:
-                k, v = line.split(':', 1)
-                headers[k.strip()] = v.strip()
-        # Parse URL and method
-        try:
-            method, path, _ = request_line.split()
-        except ValueError:
-            method, path = "POST", "/"
-
-        base_url = None
-        for line in lines:
-            if line.lower().startswith("origin:"):
-                base_url = line.split(":", 1)[1].strip()
-                break
-        if not base_url:
-            for line in lines:
-                if line.lower().startswith("referer:"):
-                    ref = line.split(":", 1)[1].strip()
-                    if ref.startswith("http"):
-                        from urllib.parse import urlparse
-                        parsed = urlparse(ref)
-                        base_url = f"{parsed.scheme}://{parsed.netloc}"
-                        break
-        if not base_url:
-            base_url = "https://www.google.com"
-        url = base_url + path
-        # Parse body as dict
-        data = {}
-        for pair in post_body.split('&'):
-            if '=' in pair:
-                k, v = pair.split('=', 1)
-                data[k] = v
-        self.values["parsed"]["value"] = data
-        # Send the request using requests.post
-        try:
-            response = requests.post(url, headers=headers, data=data)
+            method = self.values.get("method", {}).get("value", "GET")
+            url = self.values.get("url", {}).get("value", "")
+            headers = self.values.get("headers", {}).get("value", "")
+            data = self.values.get("data", {}).get("value", "")
+            # headers가 문자열이면 dict로 변환 시도
+            if isinstance(headers, str) and headers.strip():
+                try:
+                    headers = json.loads(headers)
+                except Exception:
+                    headers = {}
+            if not isinstance(headers, dict):
+                headers = {}
+            response = requests.request(method.upper(), url, headers=headers, data=data)
             output = response.text
             print(output)
         except Exception as e:
@@ -88,3 +55,23 @@ Connection: keep-alive
         self.outputs = {
             "output1": output,
         }
+    def outputUI(self, right_frame):
+        for key, value in self.outputs.items():
+            frame = tk.Frame(right_frame.bottom_section, bg="lightpink")
+            frame.pack(fill=tk.X, padx=5, pady=2)
+            label = tk.Label(frame, text=f"{key}:", bg="lightpink")
+            label.pack(side=tk.LEFT, padx=(0,5))
+            # value가 JSON 형식이면 보기 좋게 정렬
+            formatted = str(value)
+            try:
+                parsed_json = json.loads(value)
+                formatted = json.dumps(parsed_json, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+            # 줄 수 계산 (최소 2줄)
+            num_lines = max(formatted.count('\n') + 1, 2)
+            text_widget = tk.Text(frame, height=num_lines, wrap="word", bg="#ffe4ec")
+            text_widget.insert("1.0", formatted)
+            text_widget.config(state="disabled")
+            text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            right_frame.output_labels[key] = text_widget

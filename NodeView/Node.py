@@ -32,6 +32,22 @@ class BaseNode:
         for widget in right_frame.bottom_section.winfo_children():
             widget.destroy()
         right_frame.output_labels.clear()
+        self.inputUI(right_frame)
+        self.outputUI(right_frame)
+
+    def outputUI(self, right_frame):
+        for key, value in self.outputs.items():
+            frame = tk.Frame(right_frame.bottom_section, bg="lightpink")
+            frame.pack(fill=tk.X, padx=5, pady=2)
+            label = tk.Label(frame, text=f"{key}:", bg="lightpink")
+            label.pack(side=tk.LEFT, padx=(0,5))
+            text_widget = tk.Text(frame, height=2, wrap="word", bg="#ffe4ec")
+            text_widget.insert("1.0", str(value))
+            text_widget.config(state="disabled")
+            text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            right_frame.output_labels[key] = text_widget
+
+    def inputUI(self, right_frame):
         for key, value in self.values.items():
             frame = tk.Frame(right_frame.middle_section, bg="lightyellow")
             frame.pack(fill=tk.X, padx=5, pady=2)
@@ -42,29 +58,48 @@ class BaseNode:
             label.pack(side=tk.LEFT, padx=5)
             text_frame = tk.Frame(frame, bg="lightyellow")
             text_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
-            text_widget = tk.Text(text_frame, height=5, wrap="none")
-            text_widget.insert("1.0", value.get("value", ""))
-            # Vertical scrollbar (right)
-            v_scrollbar = tk.Scrollbar(text_frame, orient="vertical", command=text_widget.yview)
-            v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-            # Horizontal scrollbar (bottom, spans under the text widget)
-            h_scrollbar = tk.Scrollbar(text_frame, orient="horizontal", command=text_widget.xview)
-            h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
-            text_widget.config(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
-            text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            def _resize_text(event, text_widget=text_widget):
-                text_widget.config(width=max(10, int(text_widget.winfo_width() / 8)), height=5)
-            text_frame.bind("<Configure>", _resize_text)
-            def on_text_change(event, key=key, text_widget=text_widget):
-                if right_frame.node:
-                    right_frame.update_node_value(key, text_widget.get("1.0", tk.END).rstrip("\n"))
-            text_widget.bind("<KeyRelease>", on_text_change)
+            v_scrollbar = None
+            h_scrollbar = None
+            widget_type = value.get("type", "text")
+            if widget_type == "int":
+                # Entry 위젯 (작게)
+                text_widget = tk.Entry(text_frame, width=8)
+                text_widget.insert(0, str(value.get("value", "")))
+                text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                def on_entry_change(event, key=key, text_widget=text_widget):
+                    if right_frame.node:
+                        right_frame.update_node_value(key, text_widget.get())
+                text_widget.bind("<KeyRelease>", on_entry_change)
+            elif widget_type == "str":
+                # Text 위젯, 한 줄만 보이게
+                text_widget = tk.Text(text_frame, height=1, wrap="none")
+                text_widget.insert("1.0", value.get("value", ""))
+                text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                def on_text_change(event, key=key, text_widget=text_widget):
+                    if right_frame.node:
+                        right_frame.update_node_value(key, text_widget.get("1.0", tk.END).rstrip("\n"))
+                text_widget.bind("<KeyRelease>", on_text_change)
+            else:
+                # 기본: Text 위젯, 여러 줄
+                text_widget = tk.Text(text_frame, height=5, wrap="none")
+                text_widget.insert("1.0", value.get("value", ""))
+                # Vertical scrollbar (right)
+                v_scrollbar = tk.Scrollbar(text_frame, orient="vertical", command=text_widget.yview)
+                v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+                # Horizontal scrollbar (bottom, spans under the text widget)
+                h_scrollbar = tk.Scrollbar(text_frame, orient="horizontal", command=text_widget.xview)
+                h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+                text_widget.config(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+                text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+                def _resize_text(event, text_widget=text_widget):
+                    text_widget.config(width=max(10, int(text_widget.winfo_width() / 8)), height=5)
+                text_frame.bind("<Configure>", _resize_text)
+                def on_text_change(event, key=key, text_widget=text_widget):
+                    if right_frame.node:
+                        right_frame.update_node_value(key, text_widget.get("1.0", tk.END).rstrip("\n"))
+                text_widget.bind("<KeyRelease>", on_text_change)
             check_var.trace_add("write", lambda *args, key=key, check_var=check_var: right_frame.update_node_display(key, check_var.get()) if right_frame.node else None)
             right_frame.value_widgets[key] = (text_widget, check_var)
-        for key, value in self.outputs.items():
-            label = tk.Label(right_frame.bottom_section, text=f"{key}: {value}", bg="lightpink")
-            label.pack(fill=tk.X, padx=5, pady=2)
-            right_frame.output_labels[key] = label
 
 
 class Node:
