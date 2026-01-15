@@ -44,10 +44,9 @@ class NodeListView(tk.Frame):
         selected_item = self.tree.selection()
         if selected_item:
             node_name = self.tree.item(selected_item[0], "values")[0]
-            node_id = f"node_{len(self.parent.center_frame.nodes) + 1}"
             # Find the node_class from sample_data
             for item in self.sample_data:
                 if item[0] == node_name:
                     node_class = item[2]
                     break
-            self.parent.center_frame.add_node(node_id, node_class)
+            self.parent.center_frame.add_node( node_class)

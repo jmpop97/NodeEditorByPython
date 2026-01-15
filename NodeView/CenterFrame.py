@@ -26,6 +26,7 @@ class CenterFrame(tk.Frame):
 
         # Store references to nodes
         self.nodes = {}
+        self.node_num=0
         self.selected_node: Optional[Node] = None
         self.selected_nodes: dict[int, Node] = {}  # For multi-selection, key=node_id
         self.select_rect_id = None  # Rectangle ID for selection box
@@ -46,11 +47,11 @@ class CenterFrame(tk.Frame):
         self.canvas.bind("<ButtonRelease-1>", self.on_release)
         self.canvas.bind("<Button-3>", self.on_right_click)  # Bind right-click to remove connection
 
-    def add_node(self, node_id, node_class, num_inputs=1, num_outputs=1):
+    def add_node(self, node_class, num_inputs=1, num_outputs=1):
         # Create a new Node instance with multiple input and output pins
         x1, y1, x2, y2 = 50, 50, 150, 100
-        node = Node(self, node_id, node_class(), x1, y1, x2, y2, num_inputs, num_outputs)
-        self.nodes[node_id] = node
+        node = Node(self, node_class(), x1, y1, x2, y2, num_inputs, num_outputs)
+        self.nodes[node.node_id] = node
 
     def connect_pins(self, output_pin, input_pin, output_node, input_node, output_label, input_label):
         # Draw a line between the two pins

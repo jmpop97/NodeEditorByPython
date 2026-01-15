@@ -104,12 +104,14 @@ class BaseNode:
 
 class Node:
         # ChildNode: {end_node: {start_pin: end_pin}}
-    def __init__(self, parent, node_id, Node_class: BaseNode, x1, y1, x2, y2, num_inputs=1, num_outputs=1):
+    def __init__(self, parent, Node_class: BaseNode, x1, y1, x2, y2, num_inputs=1, num_outputs=1):
         self.ChildNode = {}
         self.nodeClass = Node_class
         Node_class.nodeUI = self
         self.parent  = parent
-        self.node_id = node_id
+        parent.node_num+=1
+        node_id=self.parent.node_num
+        self.node_id=node_id
         self.rect = parent.canvas.create_rectangle(x1, y1, x2, y2, fill="white", tags=node_id)
         self.text = parent.canvas.create_text((x1 + x2) // 2, (y1 + y2) // 2, text=self.nodeClass.nodeName, tags=node_id)
         self.inputKeys = [k for k, v in self.nodeClass.values.items() if v.get("display", False)]
