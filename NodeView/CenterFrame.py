@@ -66,13 +66,14 @@ class CenterFrame(tk.Frame):
 
     def save_selected_node_info(self):
         # Save name/description to all selected nodes (if any)
-        nodes={}
+        nodes = {}
         if not self.selected_nodes:
-            nodes=self.nodes
+            nodes = self.nodes
         else:
-             nodes=self.selected_nodes
+            nodes = self.selected_nodes
         print(nodes)
-
+        # Sort nodes by node.priority (ascending)
+        sorted_nodes = dict(sorted(nodes.items(), key=lambda item: getattr(item[1], 'priority', 0)))
         name = self.name_entry.get()
         desc = self.desc_entry.get()
         save_dir = os.path.join(os.path.dirname(__file__), '..', 'funtions')
@@ -81,7 +82,7 @@ class CenterFrame(tk.Frame):
         # Save node info
         nodes_data = []
         node_id_dic = {}
-        for i, node in enumerate(nodes.values()):
+        for i, node in enumerate(sorted_nodes.values()):
             node_name = i
             node_id_dic[node.node_id] = node_name
             # Get node coordinates
@@ -105,7 +106,7 @@ class CenterFrame(tk.Frame):
         for key, conn in self.connections.items():
             output_node_id = getattr(conn.output_node, 'node_id', None)
             input_node_id = getattr(conn.input_node, 'node_id', None)
-            if output_node_id in nodes and input_node_id in nodes:
+            if output_node_id in sorted_nodes and input_node_id in sorted_nodes:
                 connections_data.append({
                     'output_node_id': node_id_dic[output_node_id],
                     'input_node_id': node_id_dic[input_node_id],
@@ -131,6 +132,7 @@ class CenterFrame(tk.Frame):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(save_data, f, ensure_ascii=False, indent=2)
         print("save", file_path)
+        self.parent.left_frame.refresh()
         messagebox.showinfo("저장 완료", "노드 및 연결 정보가 성공적으로 저장되었습니다.")
         # Optionally, clear fields or show a message
 

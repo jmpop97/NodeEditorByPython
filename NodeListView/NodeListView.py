@@ -28,6 +28,11 @@ class NodeListView(tk.Frame):
 
         # Bind Treeview selection event
         self.tree.bind("<Double-1>", self.on_item_double_click)
+        # Bind right-click event for context menu
+        self.tree.bind("<Button-3>", self.show_context_menu)
+        # Create context menu
+        self.context_menu = tk.Menu(self, tearoff=0)
+        self.context_menu.add_command(label="삭제", command=self.delete_selected_item)
 
     def load_node_data(self):
         node_data = []
@@ -79,3 +84,47 @@ class NodeListView(tk.Frame):
                 if item[3].__name__ == class_name:
                     return item[3]
         return None
+    def refresh(self):
+        """Reload node data and update the treeview UI."""
+        self.sample_data = self.load_node_data()
+        # Clear tree
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        # Insert new data
+        for item in self.sample_data:
+            self.tree.insert("", "end", values=item)
+
+    def show_context_menu(self, event):
+        # Select the item under mouse
+        item = self.tree.identify_row(event.y)
+        if item:
+            self.tree.selection_set(item)
+            self.context_menu.post(event.x_root, event.y_root)
+
+    def delete_selected_item(self):
+        selected_item = self.tree.selection()
+        if selected_item:
+            node_name = self.tree.item(selected_item[0], "values")[0]
+            node_type = self.tree.item(selected_item[0], "values")[1]
+            if node_type != "Multy Nodes":
+                # Only allow deletion for Multy Nodes
+                return
+            # Remove from treeview
+            self.tree.delete(selected_item[0])
+            # Remove from sample_data
+            self.sample_data = [item for item in self.sample_data if item[0] != node_name]
+            # Remove the corresponding JSON file from funtions directory
+            funtions_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "funtions")
+            for filename in os.listdir(funtions_dir):
+                if filename.endswith(".json"):
+                    json_path = os.path.join(funtions_dir, filename)
+                    try:
+                        import json
+                        with open(json_path, "r", encoding="utf-8") as f:
+                            json_content = json.load(f)
+                        json_name = json_content.get("name", filename)
+                        if json_name == node_name:
+                            os.remove(json_path)
+                            break
+                    except Exception as e:
+                        print(f"Error deleting {filename}: {e}")

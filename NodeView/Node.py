@@ -104,7 +104,6 @@ class BaseNode:
 
 
 class Node:
-        # ChildNode: {end_node: {start_pin: end_pin}}
     def __init__(self, parent, Node_class: BaseNode, x1, y1, x2, y2):
         self.ChildNode = {}
         self.nodeClass = Node_class
@@ -112,6 +111,7 @@ class Node:
         self.parent  = parent
         parent.node_num+=1
         node_id=self.parent.node_num
+        self.priority = node_id  # 우선순위 속성 추가
         self.node_id=node_id
         self.rect = parent.canvas.create_rectangle(x1, y1, x2, y2, fill="white", tags=node_id)
         self.text = parent.canvas.create_text((x1 + x2) // 2, (y1 + y2) // 2, text=self.nodeClass.nodeName, tags=node_id)
@@ -128,17 +128,29 @@ class Node:
             parent.canvas, x2, y1, y2, pin_type="output", pin_labels=self.outputKeys
         )
 
+        # Play button
+        self.play_button = parent.canvas.create_rectangle(x2 - 45, y1, x2 - 30, y1 + 15, fill="green", tags=node_id)
+        self.play_text = parent.canvas.create_text(x2 - 37, y1 + 7, text="▶", fill="white", tags=node_id)
+        parent.canvas.tag_bind(self.play_button, "<Button-1>", self.on_play)
+        parent.canvas.tag_bind(self.play_text, "<Button-1>", self.on_play)
+
+        # Stop button (square, with text)
+        self.stop_button_state = False  # False: gray, True: red
+        self.stop_button = parent.canvas.create_rectangle(x2 - 30, y1, x2 - 15, y1 + 15, fill="gray", tags=node_id)
+        self.stop_text = parent.canvas.create_text(x2 - 22, y1 + 7, text="■", fill="white", tags=node_id)
+        parent.canvas.tag_bind(self.stop_button, "<Button-1>", self.on_stop)
+        parent.canvas.tag_bind(self.stop_text, "<Button-1>", self.on_stop)
+
         # Delete button
-        self.delete_button = parent.canvas.create_rectangle(x2 - 15, y1, x2, y1 + 15, fill="red", tags=node_id)
+        self.delete_button = parent.canvas.create_rectangle(x2 - 15, y1, x2, y1 + 15, fill="gray", tags=node_id)
         self.delete_text = parent.canvas.create_text(x2 - 7, y1 + 7, text="X", fill="white", tags=node_id)
         parent.canvas.tag_bind(self.delete_button, "<Button-1>", self.on_delete)
         parent.canvas.tag_bind(self.delete_text, "<Button-1>", self.on_delete)
-
-        # Play button
-        self.play_button = parent.canvas.create_rectangle(x2 - 30, y1, x2 - 15, y1 + 15, fill="green", tags=node_id)
-        self.play_text = parent.canvas.create_text(x2 - 22, y1 + 7, text="▶", fill="white", tags=node_id)
-        parent.canvas.tag_bind(self.play_button, "<Button-1>", self.on_play)
-        parent.canvas.tag_bind(self.play_text, "<Button-1>", self.on_play)
+    def on_stop(self, event):
+        # Toggle stop button color between gray and red
+        self.stop_button_state = not self.stop_button_state
+        color = "red" if self.stop_button_state else "gray"
+        self.parent.canvas.itemconfig(self.stop_button, fill=color)
 
 
     def move(self, dx, dy):
@@ -156,6 +168,9 @@ class Node:
         # Move the play button and its text
         self.parent.canvas.move(self.play_button, dx, dy)
         self.parent.canvas.move(self.play_text, dx, dy)
+        # Move the stop button and its text
+        self.parent.canvas.move(self.stop_button, dx, dy)
+        self.parent.canvas.move(self.stop_text, dx, dy)
 
         # Update connected lines using Connection class
         for connection in self.parent.canvas.master.connections.values():
@@ -194,6 +209,9 @@ class Node:
         # Remove the play button and its text
         self.parent.canvas.delete(self.play_button)
         self.parent.canvas.delete(self.play_text)
+        # Remove the stop button and its text
+        self.parent.canvas.delete(self.stop_button)
+        self.parent.canvas.delete(self.stop_text)
         # Remove the node from the center frame's node dictionary
         for node_id, node in self.parent.canvas.master.nodes.items():
             if node == self:
@@ -203,15 +221,29 @@ class Node:
         self.parent.canvas.master.parent.right_frame.update_node_details(BaseNode())
 
     def on_play(self, event):
-        try:
-            self.nodeClass.functions()
-            for input_node,dic in self.ChildNode.items():
-                for output,inputList in dic.items():
-                    for input in inputList:
-                        input_node.nodeClass.values[input]["value"]=self.nodeClass.outputs[output]
-        except Exception as e:
-            print(f"Error executing funtions for node {self.node_id}: {e}")
-        self.nodeClass.updateNodeDetailUi(self.parent.parent.right_frame)
+        # Priority queue: (priority, node)
+        play_functions = [(self.priority, self)]
+        visited = set()
+        while play_functions:
+            # Pop node with smallest priority
+            play_functions.sort(key=lambda x: x[0])
+            priority, node = play_functions.pop(0)
+            if node.node_id in visited:
+                continue
+            visited.add(node.node_id)
+            try:
+                node.nodeClass.functions()
+                # Update child nodes and add them to play_functions
+                for input_node, dic in node.ChildNode.items():
+                    for output, inputList in dic.items():
+                        for input in inputList:
+                            input_node.nodeClass.values[input]["value"] = node.nodeClass.outputs[output]
+                    # Add child node to play_functions queue
+                    if input_node.node_id not in visited:
+                        play_functions.append((input_node.priority, input_node))
+            except Exception as e:
+                print(f"Error executing functions for node {node.node_id}: {e}")
+        node.nodeClass.updateNodeDetailUi(node.parent.parent.right_frame)
     def create_pins(self, canvas, x, y1, y2, pin_labels, pin_type):
         pins = []
         texts = []
