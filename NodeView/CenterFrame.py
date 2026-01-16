@@ -93,7 +93,7 @@ class CenterFrame(tk.Frame):
             node_data = {
                 'node_id': node_name,
                 'className': type(node.nodeClass).__name__,
-                'nodeName': getattr(node.nodeClass, 'name', type(node.nodeClass).__name__),
+                'nodeName': getattr(node.nodeClass, 'nodeName', type(node.nodeClass).__name__),
                 'description': getattr(node.nodeClass, 'description', ''),
                 'values': getattr(node.nodeClass, 'values', ''),
                 'outputs': getattr(node.nodeClass, 'outputs', ''),
@@ -141,11 +141,11 @@ class CenterFrame(tk.Frame):
         node = Node(self, node_class(), x1, y1, x2, y2)
         self.nodes[node.node_id] = node
         return node
-    def add_nodes(self,nodes_info):
+    def add_nodes(self, nodes_info):
         nodes_data = nodes_info.get('nodes', [])
         connections_data = nodes_info.get('connections', [])
-        nodeIdDic={}
-        # Restore nodes info (only updates name/description for existing nodes)
+        nodeIdDic = {}
+        # Restore nodes info and set nodeName, description, values, outputs
         for node_info in nodes_data:
             className = node_info.get('className')
             node_id = node_info.get('node_id')
@@ -153,6 +153,16 @@ class CenterFrame(tk.Frame):
             coords = node_info.get('coords', (50, 50, 150, 100))
             x1, y1, x2, y2 = coords
             node = self.add_node(node_class, x1, y1, x2, y2)
+            # Set nodeName, description, values, outputs if present
+            if hasattr(node, 'nodeClass'):
+                if 'nodeName' in node_info:
+                    setattr(node.nodeClass, 'nodeName', node_info['nodeName'])
+                if 'description' in node_info:
+                    setattr(node.nodeClass, 'description', node_info['description'])
+                if 'values' in node_info:
+                    setattr(node.nodeClass, 'values', node_info['values'])
+                if 'outputs' in node_info:
+                    setattr(node.nodeClass, 'outputs', node_info['outputs'])
             nodeIdDic[node_id] = node.node_id
         # Restore connections (only between existing nodes)
         for conn_info in connections_data:
