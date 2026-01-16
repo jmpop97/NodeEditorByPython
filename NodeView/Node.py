@@ -30,12 +30,13 @@ class BaseNode:
             widget.destroy()
         right_frame.value_widgets.clear()
         self.inputUI(right_frame)
-        self.outputUI(right_frame)
-
-    def outputUI(self, right_frame):
         for widget in right_frame.bottom_section.winfo_children():
             widget.destroy()
         right_frame.output_labels.clear()
+        self.outputUI(right_frame)
+
+    def outputUI(self, right_frame):
+
         for key, value in self.outputs.items():
             frame = tk.Frame(right_frame.bottom_section, bg="lightpink")
             frame.pack(fill=tk.X, padx=5, pady=2)
@@ -210,7 +211,7 @@ class Node:
                         input_node.nodeClass.values[input]["value"]=self.nodeClass.outputs[output]
         except Exception as e:
             print(f"Error executing funtions for node {self.node_id}: {e}")
-        self.nodeClass.outputUI(self.parent.parent.right_frame)
+        self.nodeClass.updateNodeDetailUi(self.parent.parent.right_frame)
     def create_pins(self, canvas, x, y1, y2, pin_labels, pin_type):
         pins = []
         texts = []

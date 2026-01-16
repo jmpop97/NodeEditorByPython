@@ -1,0 +1,107 @@
+{
+  "name": "d",
+  "nodes": [
+    {
+      "node_id": 0,
+      "name": "BurfNode",
+      "description": "burf suite",
+      "values": {
+        "text": {
+          "value": "POST /sqlInjection5_1.php HTTP/1.1\nHost: ctf.segfaulthub.com:1120\nContent-Length: 15\nCache-Control: max-age=0\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: http://ctf.segfaulthub.com:1120\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nReferer: http://ctf.segfaulthub.com:1120/sqlInjection5_1.php\nAccept-Encoding: gzip, deflate, br\nCookie: session=4adc9fd0-5971-4ff6-a958-8c89d268b90a.i3r5TSlX4Vj7FPEt1wcooZgTHSQ\nConnection: keep-alive\n\nquery=normaltic",
+          "display": true
+        }
+      },
+      "outputs": {
+        "method": "POST",
+        "url": "https://ctf.segfaulthub.com:1120/sqlInjection5_1.php",
+        "headers": {
+          "Host": "ctf.segfaulthub.com:1120",
+          "Content-Length": "15",
+          "Cache-Control": "max-age=0",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+          "Origin": "http://ctf.segfaulthub.com:1120",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Upgrade-Insecure-Requests": "1",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "Referer": "http://ctf.segfaulthub.com:1120/sqlInjection5_1.php",
+          "Accept-Encoding": "gzip, deflate, br",
+          "Cookie": "session=4adc9fd0-5971-4ff6-a958-8c89d268b90a.i3r5TSlX4Vj7FPEt1wcooZgTHSQ",
+          "Connection": "keep-alive"
+        },
+        "data": ""
+      }
+    },
+    {
+      "node_id": 1,
+      "name": "RequestNode",
+      "description": "request",
+      "values": {
+        "method": {
+          "value": "POST",
+          "display": true,
+          "type": "text"
+        },
+        "url": {
+          "value": "https://ctf.segfaulthub.com:1120/sqlInjection5_1.php",
+          "display": true,
+          "type": "text"
+        },
+        "headers": {
+          "value": {
+            "Host": "ctf.segfaulthub.com:1120",
+            "Content-Length": "15",
+            "Cache-Control": "max-age=0",
+            "Accept-Language": "ko-KR,ko;q=0.9",
+            "Origin": "http://ctf.segfaulthub.com:1120",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Referer": "http://ctf.segfaulthub.com:1120/sqlInjection5_1.php",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cookie": "session=4adc9fd0-5971-4ff6-a958-8c89d268b90a.i3r5TSlX4Vj7FPEt1wcooZgTHSQ",
+            "Connection": "keep-alive"
+          },
+          "display": true,
+          "type": "text"
+        },
+        "data": {
+          "value": "",
+          "display": true,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "response": ""
+      }
+    }
+  ],
+  "connections": [
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "method",
+      "input_label": "method"
+    },
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "headers",
+      "input_label": "headers"
+    },
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "url",
+      "input_label": "url"
+    },
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "data",
+      "input_label": "data"
+    }
+  ],
+  "desc": "d"
+}

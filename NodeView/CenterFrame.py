@@ -2,7 +2,9 @@ import tkinter as tk
 from tkinter import Canvas
 from NodeView.Node import Node
 from typing import Optional
-
+import json
+import os
+from tkinter import messagebox
 class Connection:
     def __init__(self, output_pin, input_pin, output_node, input_node,output_label,input_label, line_id):
         self.input_node = input_node
@@ -19,6 +21,25 @@ class CenterFrame(tk.Frame):
         super().__init__(parent, width=200, bg="white")
         self.parent = app  # Store the reference to the app
         self.pack_propagate(False)
+
+        # --- UI for name/description and save button ---
+        top_frame = tk.Frame(self, bg="white")
+        top_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        tk.Label(top_frame, text="Name:", bg="white").pack(side=tk.LEFT)
+        self.name_entry = tk.Entry(top_frame, width=15)
+        self.name_entry.pack(side=tk.LEFT, padx=(0, 10))
+
+        tk.Label(top_frame, text="Description:", bg="white").pack(side=tk.LEFT)
+        self.desc_entry = tk.Entry(top_frame, width=25)
+        self.desc_entry.pack(side=tk.LEFT, padx=(0, 10))
+
+        save_btn = tk.Button(top_frame, text="저장", command=self.save_selected_node_info)
+        save_btn.pack(side=tk.LEFT)
+
+        # Add a load button next to save button
+        load_btn = tk.Button(top_frame, text="불러오기", command=self.load_selected_node_info)
+        load_btn.pack(side=tk.LEFT)
 
         # Add a canvas to draw nodes
         self.canvas = Canvas(self, bg="gray")
@@ -46,6 +67,113 @@ class CenterFrame(tk.Frame):
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_release)
         self.canvas.bind("<Button-3>", self.on_right_click)  # Bind right-click to remove connection
+
+    def save_selected_node_info(self):
+        # Save name/description to all selected nodes (if any)
+        nodes={}
+        if not self.selected_nodes:
+            nodes=self.nodes
+        else:
+             nodes=self.selected_nodes
+        print(nodes)
+
+        name = self.name_entry.get()
+        desc = self.desc_entry.get()
+        save_dir = os.path.join(os.path.dirname(__file__), '..', 'funtions')
+        os.makedirs(save_dir, exist_ok=True)
+
+        # Save node info
+        nodes_data = []
+        node_id_dic = {}
+        for i, node in enumerate(nodes.values()):
+            node_name = i
+            node_id_dic[node.node_id] = node_name
+            node_data = {
+                'node_id': node_name,
+                'name': getattr(node.nodeClass, 'name', type(node.nodeClass).__name__),
+                'description': getattr(node.nodeClass, 'description', ''),
+                'values': getattr(node.nodeClass, 'values', ''),
+                'outputs': getattr(node.nodeClass, 'outputs', ''),
+            }
+            nodes_data.append(node_data)
+
+        # Save connections related to selected nodes
+        connections_data = []
+        for key, conn in self.connections.items():
+            output_node_id = getattr(conn.output_node, 'node_id', None)
+            input_node_id = getattr(conn.input_node, 'node_id', None)
+            if output_node_id in nodes and input_node_id in nodes:
+                connections_data.append({
+                    'output_node_id': node_id_dic[output_node_id],
+                    'input_node_id': node_id_dic[input_node_id],
+                    'output_label': conn.output_label,
+                    'input_label': conn.input_label
+                })
+
+        # Find next available file number
+        existing_files = [f for f in os.listdir(save_dir) if f.endswith('.json') and f[:-5].isdigit()]
+        if existing_files:
+            max_num = max([int(f[:-5]) for f in existing_files])
+            next_num = max_num + 1
+        else:
+            next_num = 1
+        file_name = f"{next_num}.json"
+        file_path = os.path.join(save_dir, file_name)
+        save_data = {
+            'name': name,
+            'desc': desc,
+            'nodes': nodes_data,
+            'connections': connections_data,
+        }
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(save_data, f, ensure_ascii=False, indent=2)
+        print("save", file_path)
+        messagebox.showinfo("저장 완료", "노드 및 연결 정보가 성공적으로 저장되었습니다.")
+        # Optionally, clear fields or show a message
+
+    def load_selected_node_info(self):
+        load_dir = os.path.join(os.path.dirname(__file__), '..', 'funtions')
+        file_name = "selected_nodes_and_connections.json"
+        file_path = os.path.join(load_dir, file_name)
+        if not os.path.exists(file_path):
+            messagebox.showerror("로드 실패", "저장된 노드 정보 파일이 없습니다.")
+            return
+        with open(file_path, 'r', encoding='utf-8') as f:
+            load_data = json.load(f)
+        nodes_data = load_data.get('nodes', [])
+        connections_data = load_data.get('connections', [])
+
+        # Clear current selection
+        self.selected_nodes = {}
+        # Optionally clear all nodes/connections if desired
+        # self.nodes.clear()
+        # self.connections.clear()
+
+        # Restore nodes info (only updates name/description for existing nodes)
+        for node_info in nodes_data:
+            node_id = node_info.get('node_id')
+            name = node_info.get('name')
+            desc = node_info.get('description')
+            node = self.nodes.get(node_id)
+            if node:
+                setattr(node, 'name', name)
+                setattr(node, 'description', desc)
+                self.selected_nodes[node_id] = node
+        # Restore connections (only between existing nodes)
+        for conn_info in connections_data:
+            output_node_id = conn_info.get('output_node_id')
+            input_node_id = conn_info.get('input_node_id')
+            output_label = conn_info.get('output_label')
+            input_label = conn_info.get('input_label')
+            output_node = self.nodes.get(output_node_id)
+            input_node = self.nodes.get(input_node_id)
+            if output_node and input_node:
+                # Find pins by label (assumes Node exposes get_pin_by_label)
+                output_pin = getattr(output_node, 'get_pin_by_label', lambda l, t: None)(output_label, 'output')
+                input_pin = getattr(input_node, 'get_pin_by_label', lambda l, t: None)(input_label, 'input')
+                if output_pin and input_pin:
+                    self.connect_pins(output_pin, input_pin, output_node, input_node, output_label, input_label)
+        messagebox.showinfo("로드 완료", "노드 및 연결 정보가 성공적으로 로드되었습니다.")
 
     def add_node(self, node_class, num_inputs=1, num_outputs=1):
         # Create a new Node instance with multiple input and output pins
@@ -141,6 +269,13 @@ class CenterFrame(tk.Frame):
                             # Notify RightFrame about the selected node
                             if self.selected_node:
                                 self.parent.right_frame.update_node_details(self.selected_node.nodeClass)
+                            # Update entry fields with node info if present
+                            self.name_entry.delete(0, tk.END)
+                            self.desc_entry.delete(0, tk.END)
+                            if hasattr(self.selected_node, 'name'):
+                                self.name_entry.insert(0, getattr(self.selected_node, 'name'))
+                            if hasattr(self.selected_node, 'description'):
+                                self.desc_entry.insert(0, getattr(self.selected_node, 'description'))
                     found_node = True
                     break
             if found_node:
@@ -148,6 +283,8 @@ class CenterFrame(tk.Frame):
         if not found_node and not ctrl_pressed:
             # Clicked empty space: clear selection
             self.selected_nodes = {}
+            self.name_entry.delete(0, tk.END)
+            self.desc_entry.delete(0, tk.END)
         # Reset all unselected nodes to default appearance
         for node_id, node in self.nodes.items():
             if node_id not in self.selected_nodes:
