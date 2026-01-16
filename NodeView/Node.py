@@ -105,7 +105,7 @@ class BaseNode:
 
 class Node:
         # ChildNode: {end_node: {start_pin: end_pin}}
-    def __init__(self, parent, Node_class: BaseNode, x1, y1, x2, y2, num_inputs=1, num_outputs=1):
+    def __init__(self, parent, Node_class: BaseNode, x1, y1, x2, y2):
         self.ChildNode = {}
         self.nodeClass = Node_class
         Node_class.nodeUI = self

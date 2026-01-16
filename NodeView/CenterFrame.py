@@ -37,10 +37,6 @@ class CenterFrame(tk.Frame):
         save_btn = tk.Button(top_frame, text="저장", command=self.save_selected_node_info)
         save_btn.pack(side=tk.LEFT)
 
-        # Add a load button next to save button
-        load_btn = tk.Button(top_frame, text="불러오기", command=self.load_selected_node_info)
-        load_btn.pack(side=tk.LEFT)
-
         # Add a canvas to draw nodes
         self.canvas = Canvas(self, bg="gray")
         self.canvas.pack(fill=tk.BOTH, expand=True)
@@ -88,12 +84,19 @@ class CenterFrame(tk.Frame):
         for i, node in enumerate(nodes.values()):
             node_name = i
             node_id_dic[node.node_id] = node_name
+            # Get node coordinates
+            if hasattr(node, 'get_coords'):
+                coords = node.get_coords()
+            else:
+                coords = (None, None, None, None)
             node_data = {
                 'node_id': node_name,
-                'name': getattr(node.nodeClass, 'name', type(node.nodeClass).__name__),
+                'className': type(node.nodeClass).__name__,
+                'nodeName': getattr(node.nodeClass, 'name', type(node.nodeClass).__name__),
                 'description': getattr(node.nodeClass, 'description', ''),
                 'values': getattr(node.nodeClass, 'values', ''),
                 'outputs': getattr(node.nodeClass, 'outputs', ''),
+                'coords': coords,
             }
             nodes_data.append(node_data)
 
@@ -131,55 +134,48 @@ class CenterFrame(tk.Frame):
         messagebox.showinfo("저장 완료", "노드 및 연결 정보가 성공적으로 저장되었습니다.")
         # Optionally, clear fields or show a message
 
-    def load_selected_node_info(self):
-        load_dir = os.path.join(os.path.dirname(__file__), '..', 'funtions')
-        file_name = "selected_nodes_and_connections.json"
-        file_path = os.path.join(load_dir, file_name)
-        if not os.path.exists(file_path):
-            messagebox.showerror("로드 실패", "저장된 노드 정보 파일이 없습니다.")
-            return
-        with open(file_path, 'r', encoding='utf-8') as f:
-            load_data = json.load(f)
-        nodes_data = load_data.get('nodes', [])
-        connections_data = load_data.get('connections', [])
-
-        # Clear current selection
-        self.selected_nodes = {}
-        # Optionally clear all nodes/connections if desired
-        # self.nodes.clear()
-        # self.connections.clear()
-
+    def add_node(self, node_class, x1=50, y1=50, x2=150, y2=100):
+        # Create a new Node instance with multiple input and output pins
+        node = Node(self, node_class(), x1, y1, x2, y2)
+        self.nodes[node.node_id] = node
+        return node
+    def add_nodes(self,nodes_info):
+        nodes_data = nodes_info.get('nodes', [])
+        connections_data = nodes_info.get('connections', [])
+        nodeIdDic={}
         # Restore nodes info (only updates name/description for existing nodes)
         for node_info in nodes_data:
+            className = node_info.get('className')
             node_id = node_info.get('node_id')
-            name = node_info.get('name')
-            desc = node_info.get('description')
-            node = self.nodes.get(node_id)
-            if node:
-                setattr(node, 'name', name)
-                setattr(node, 'description', desc)
-                self.selected_nodes[node_id] = node
+            node_class = self.parent.left_frame.get_node_by_classname(className)
+            coords = node_info.get('coords', (50, 50, 150, 100))
+            x1, y1, x2, y2 = coords
+            node = self.add_node(node_class, x1, y1, x2, y2)
+            nodeIdDic[node_id] = node.node_id
         # Restore connections (only between existing nodes)
         for conn_info in connections_data:
-            output_node_id = conn_info.get('output_node_id')
-            input_node_id = conn_info.get('input_node_id')
+            output_node_id = nodeIdDic.get(conn_info.get('output_node_id'))
+            input_node_id = nodeIdDic.get(conn_info.get('input_node_id'))
             output_label = conn_info.get('output_label')
             input_label = conn_info.get('input_label')
             output_node = self.nodes.get(output_node_id)
             input_node = self.nodes.get(input_node_id)
-            if output_node and input_node:
-                # Find pins by label (assumes Node exposes get_pin_by_label)
-                output_pin = getattr(output_node, 'get_pin_by_label', lambda l, t: None)(output_label, 'output')
-                input_pin = getattr(input_node, 'get_pin_by_label', lambda l, t: None)(input_label, 'input')
-                if output_pin and input_pin:
-                    self.connect_pins(output_pin, input_pin, output_node, input_node, output_label, input_label)
-        messagebox.showinfo("로드 완료", "노드 및 연결 정보가 성공적으로 로드되었습니다.")
-
-    def add_node(self, node_class, num_inputs=1, num_outputs=1):
-        # Create a new Node instance with multiple input and output pins
-        x1, y1, x2, y2 = 50, 50, 150, 100
-        node = Node(self, node_class(), x1, y1, x2, y2, num_inputs, num_outputs)
-        self.nodes[node.node_id] = node
+            output_pin = None
+            input_pin = None
+            # Find the correct output_pin by label
+            if output_node and hasattr(output_node, 'outputKeys') and hasattr(output_node, 'output_pins'):
+                for idx, label in enumerate(output_node.outputKeys):
+                    if label == output_label:
+                        output_pin = output_node.output_pins[idx]
+                        break
+            # Find the correct input_pin by label
+            if input_node and hasattr(input_node, 'inputKeys') and hasattr(input_node, 'input_pins'):
+                for idx, label in enumerate(input_node.inputKeys):
+                    if label == input_label:
+                        input_pin = input_node.input_pins[idx]
+                        break
+            if output_node and input_node and output_pin is not None and input_pin is not None:
+                self.connect_pins(output_pin, input_pin, output_node, input_node, output_label, input_label)
 
     def connect_pins(self, output_pin, input_pin, output_node, input_node, output_label, input_label):
         # Draw a line between the two pins
@@ -367,7 +363,6 @@ class CenterFrame(tk.Frame):
             self.canvas.itemconfig(output_pin, fill="white")
             self.selected_pin = {"input": None, "output": None}
         
-
     def on_right_click(self, event):
         # Detect if a line (connection) is clicked
         overlapping_items = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
