@@ -265,13 +265,6 @@ class CenterFrame(tk.Frame):
                             # Notify RightFrame about the selected node
                             if self.selected_node:
                                 self.parent.right_frame.update_node_details(self.selected_node.nodeClass)
-                            # Update entry fields with node info if present
-                            self.name_entry.delete(0, tk.END)
-                            self.desc_entry.delete(0, tk.END)
-                            if hasattr(self.selected_node, 'name'):
-                                self.name_entry.insert(0, getattr(self.selected_node, 'name'))
-                            if hasattr(self.selected_node, 'description'):
-                                self.desc_entry.insert(0, getattr(self.selected_node, 'description'))
                     found_node = True
                     break
             if found_node:
@@ -279,8 +272,6 @@ class CenterFrame(tk.Frame):
         if not found_node and not ctrl_pressed:
             # Clicked empty space: clear selection
             self.selected_nodes = {}
-            self.name_entry.delete(0, tk.END)
-            self.desc_entry.delete(0, tk.END)
         # Reset all unselected nodes to default appearance
         for node_id, node in self.nodes.items():
             if node_id not in self.selected_nodes:
