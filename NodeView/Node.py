@@ -14,6 +14,7 @@ class BaseNode:
         }
         self.nodeUI: Optional[Node] = None
     def functions(self):
+        # return []
         pass
     def updateNodeDetailUi(self, right_frame=None):
         """
@@ -69,7 +70,11 @@ class BaseNode:
                 text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
                 def on_entry_change(event, key=key, text_widget=text_widget):
                     if right_frame.node:
-                        right_frame.update_node_value(key, text_widget.get())
+                        try:
+                            value = int(text_widget.get())
+                        except ValueError:
+                            value = 0
+                        right_frame.update_node_value(key, value)
                 text_widget.bind("<KeyRelease>", on_entry_change)
             elif widget_type == "str":
                 # Text 위젯, 한 줄만 보이게
@@ -223,48 +228,50 @@ class Node:
     def on_play(self, event):
         # Priority queue: (priority, node)
         play_functions = [(self.priority, self)]
-        visited = set()
         while play_functions:
             # Pop node with smallest priority
             play_functions.sort(key=lambda x: x[0])
             priority, node = play_functions.pop(0)
-            if node.node_id in visited:
-                continue
-            visited.add(node.node_id)
             try:
-                node.nodeClass.functions()
+                outputValues=node.nodeClass.functions()
                 # Update child nodes and add them to play_functions
                 for input_node, dic in node.ChildNode.items():
                     for output, inputList in dic.items():
+                        if outputValues and not (output in outputValues):
+                            continue
                         for input in inputList:
                             input_node.nodeClass.values[input]["value"] = node.nodeClass.outputs[output]
-                    # Add child node to play_functions queue
-                    if input_node.node_id not in visited:
-                        play_functions.append((input_node.priority, input_node))
             except Exception as e:
                 print(f"Error executing functions for node {node.node_id}: {e}")
         node.nodeClass.updateNodeDetailUi(node.parent.parent.right_frame)
     def create_pins(self, canvas, x, y1, y2, pin_labels, pin_type):
         pins = []
         texts = []
-        num_pins = len(pin_labels)  # Determine the number of pins from the length of pin_labels
+        num_pins = len(pin_labels)
         for i, label in enumerate(pin_labels):
             pin_y = y1 + (i + 1) * (y2 - y1) // (num_pins + 1)
-            if pin_type == "input":
-                pin_x1, pin_y1 = x - 10, pin_y - 5
-                pin_x2, pin_y2 = x, pin_y + 5
-                pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
-                text = canvas.create_text(pin_x1 - 20, pin_y, anchor="e", text=label)
-                canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
-            elif pin_type == "output":
-                pin_x1, pin_y1 = x, pin_y - 5
-                pin_x2, pin_y2 = x + 10, pin_y + 5
-                pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
-                text = canvas.create_text(pin_x2 + 20, pin_y, anchor="w", text=label)
-                canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
+            pin, text = self.create_pin(canvas, x, pin_y, pin_type, label)
             pins.append(pin)
             texts.append(text)
         return pins, texts
+
+    def create_pin(self, canvas, x, pin_y, pin_type, label):
+        if pin_type == "input":
+            pin_x1, pin_y1 = x - 10, pin_y - 5
+            pin_x2, pin_y2 = x, pin_y + 5
+            pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
+            text = canvas.create_text(pin_x1 - 20, pin_y, anchor="e", text=label)
+            canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
+        elif pin_type == "output":
+            pin_x1, pin_y1 = x, pin_y - 5
+            pin_x2, pin_y2 = x + 10, pin_y + 5
+            pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
+            text = canvas.create_text(pin_x2 + 20, pin_y, anchor="w", text=label)
+            canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
+        else:
+            pin = None
+            text = None
+        return pin, text
     def on_pin_click(self, pin,pin_type,label):
         print(f"Input pin '{pin}' pin_type '{pin_type}' clicked (Node: {self.nodeClass.nodeName})")
         # Delegate the pin click handling to the CenterFrame

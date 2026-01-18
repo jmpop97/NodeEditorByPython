@@ -5,8 +5,6 @@ class TestNode(BaseNode):
         self.nodeName="test"
         self.values = {
             "input1": { "display": True,"value": 1,"type":"int"},
-            "input2": { "display": True,"value": 2,"type":"int"},
-            "input3": { "display": True,"value": 3,"type":"int"},
         }
         self.outputs = {
             "output1": 1,
@@ -16,17 +14,12 @@ class TestNode(BaseNode):
     def functions(self):
         input1 = self.values["input1"]["value"]
         input2 = self.values["input2"]["value"]
-        input3 = self.values["input3"]["value"]
         if input1 == 1:
             self.outputs = {
-                "output1": input1 + input2 + input3,
-                "output2": input1 * input2 * input3,
             }
             return ["output1"]
-        if input2 ==2:
+        if input2 ==0:
             self.outputs = {
-                "output1": input1 + input2 + input3,
-                "output2": input1 * input2 * input3,
             }
             return ["output2"]
             
