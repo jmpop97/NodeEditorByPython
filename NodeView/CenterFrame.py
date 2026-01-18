@@ -174,18 +174,11 @@ class CenterFrame(tk.Frame):
             input_node = self.nodes.get(input_node_id)
             output_pin = None
             input_pin = None
-            # Find the correct output_pin by label
-            if output_node and hasattr(output_node, 'outputKeys') and hasattr(output_node, 'output_pins'):
-                for idx, label in enumerate(output_node.outputKeys):
-                    if label == output_label:
-                        output_pin = output_node.output_pins[idx]
-                        break
-            # Find the correct input_pin by label
-            if input_node and hasattr(input_node, 'inputKeys') and hasattr(input_node, 'input_pins'):
-                for idx, label in enumerate(input_node.inputKeys):
-                    if label == input_label:
-                        input_pin = input_node.input_pins[idx]
-                        break
+            # Use pins dict for pin lookup by label
+            if output_node and hasattr(output_node, 'pins'):
+                output_pin = output_node.pins['output_pin'].get(output_label)
+            if input_node and hasattr(input_node, 'pins'):
+                input_pin = input_node.pins['input_pin'].get(input_label)
             if output_node and input_node and output_pin is not None and input_pin is not None:
                 self.connect_pins(output_pin, input_pin, output_node, input_node, output_label, input_label)
 
