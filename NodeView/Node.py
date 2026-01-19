@@ -197,7 +197,6 @@ class Node:
         self.parent.canvas.delete(self.rect)
         self.parent.canvas.delete(self.text)
         # Delete input pins and texts
-        input_texts = self.pins['input_texts'] if 'input_texts' in self.pins else []
         for pin_types in self.pins.values():
             for pin,text,_ in pin_types.values():
                 self.parent.canvas.delete(pin)
@@ -293,7 +292,7 @@ class Node:
         right_frame = self.parent.parent.right_frame
         checked = right_frame.value_widgets[key][1].get()
         if checked:
-            pass
+            self.create_pin(self.parent.canvas,"input",label)
         else:
             pin,text,_=self.pins["input_pin"].pop(key)
             self.parent.canvas.delete(pin)
