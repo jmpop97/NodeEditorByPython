@@ -152,20 +152,10 @@ class Node:
         self.parent.canvas.move(self.rect, dx, dy)
         self.parent.canvas.move(self.text, dx, dy)
         # Move input pins and texts
-        for text, pin in self.pins['input_pin'].items():
-            self.parent.canvas.move(pin, dx, dy)
-            # Find the corresponding text item
-            idx = list(self.pins['input_pin'].keys()).index(text)
-            text_item = self.pins['input_texts'][idx] if 'input_texts' in self.pins else None
-            if text_item:
-                self.parent.canvas.move(text_item, dx, dy)
-        # Move output pins and texts
-        for text, pin in self.pins['output_pin'].items():
-            self.parent.canvas.move(pin, dx, dy)
-            idx = list(self.pins['output_pin'].keys()).index(text)
-            text_item = self.pins['output_texts'][idx] if 'output_texts' in self.pins else None
-            if text_item:
-                self.parent.canvas.move(text_item, dx, dy)
+        for pin_types in self.pins.values():
+            for pin_type in pin_types.values():
+                for pin in pin_type:
+                    self.parent.canvas.move(pin, dx, dy)
         # Move the delete button and its text
         self.parent.canvas.move(self.delete_button, dx, dy)
         self.parent.canvas.move(self.delete_text, dx, dy)
@@ -177,8 +167,9 @@ class Node:
         self.parent.canvas.move(self.stop_text, dx, dy)
 
         # Update connected lines using Connection class
+        # all_pins now contains (pin, text) tuples, so extract pin only
+        all_pins = [pin for (pin, text) in self.pins['input_pin'].values()] + [pin for (pin, text) in self.pins['output_pin'].values()]
         for connection in self.parent.canvas.master.connections.values():
-            all_pins = list(self.pins['input_pin'].values()) + list(self.pins['output_pin'].values())
             if (connection.input_pin in all_pins) or (connection.output_pin in all_pins):
                 start_coords = self.parent.canvas.coords(connection.output_pin)
                 end_coords = self.parent.canvas.coords(connection.input_pin)
@@ -203,18 +194,12 @@ class Node:
         self.parent.canvas.delete(self.text)
         # Delete input pins and texts
         input_texts = self.pins['input_texts'] if 'input_texts' in self.pins else []
-        for idx, (text, pin) in enumerate(self.pins['input_pin'].items()):
-            self.parent.canvas.delete(pin)
-            if idx < len(input_texts):
-                self.parent.canvas.delete(input_texts[idx])
-            self.parent.canvas.master.remove_connection(pin)  # Remove connections for input pins
+        for pin_types in self.pins.values():
+            for pin,text in pin_types.values():
+                self.parent.canvas.delete(pin)
+                self.parent.canvas.delete(text)
+                self.parent.canvas.master.remove_connection(pin)  # Remove connections for input pins
         # Delete output pins and texts
-        output_texts = self.pins['output_texts'] if 'output_texts' in self.pins else []
-        for idx, (text, pin) in enumerate(self.pins['output_pin'].items()):
-            self.parent.canvas.delete(pin)
-            if idx < len(output_texts):
-                self.parent.canvas.delete(output_texts[idx])
-            self.parent.canvas.master.remove_connection(pin)  # Remove connections for output pins
         self.parent.canvas.delete(self.delete_button)
         self.parent.canvas.delete(self.delete_text)
         # Remove the play button and its text
@@ -281,12 +266,8 @@ class Node:
         # pins dict structure: {'input_pin': {text: pin, ...}, 'output_pin': {text: pin, ...},
         #   'input_pins': [...], 'input_texts': [...], 'output_pins': [...], 'output_texts': [...]}
         return {
-            'input_pin': {text: pin for text, pin in zip(input_keys, input_pins)},
-            'output_pin': {text: pin for text, pin in zip(output_keys, output_pins)},
-            'input_pins': input_pins,
-            'input_texts': input_texts,
-            'output_pins': output_pins,
-            'output_texts': output_texts
+            'input_pin': {key: (pin,text) for text, pin,key in zip(input_texts, input_pins,input_keys)},
+            'output_pin': {key: (pin,text) for text, pin,key in zip(output_texts, output_pins,output_keys)},
         }
 
     def create_pin(self, canvas, x, pin_y, pin_type, label):
