@@ -37,7 +37,6 @@ class BaseNode:
         self.outputUI(right_frame)
 
     def outputUI(self, right_frame):
-
         for key, value in self.outputs.items():
             frame = tk.Frame(right_frame.bottom_section, bg="lightpink")
             frame.pack(fill=tk.X, padx=5, pady=2)
@@ -54,7 +53,7 @@ class BaseNode:
             frame = tk.Frame(right_frame.middle_section, bg="lightyellow")
             frame.pack(fill=tk.X, padx=5, pady=2)
             check_var = tk.BooleanVar(value=value.get("display", False))
-            check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow")
+            check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow", command=lambda k=key, l=key: self.nodeUI.on_check(k, l))
             check_button.pack(side=tk.LEFT)
             label = tk.Label(frame, text=key, bg="lightyellow")
             label.pack(side=tk.LEFT, padx=5)
@@ -297,3 +296,14 @@ class Node:
 
     def on_output_pin_click(self, pin_label, node):
         print(f"Output pin '{pin_label}' clicked (Node: {self.nodeClass.nodeName})")
+    def on_check(self, key, label):
+        right_frame = self.parent.parent.right_frame
+        checked = right_frame.value_widgets[key][1].get()
+        if checked:
+            pass
+        else:
+            pin,text=self.pins["input_pin"].pop(key)
+            self.parent.canvas.delete(pin)
+            self.parent.canvas.delete(text)
+            self.parent.canvas.master.remove_connection(pin) 
+        print(f"Checkbutton clicked for key: {key}, label: {label}, checked: {checked}")
