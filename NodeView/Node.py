@@ -53,7 +53,7 @@ class BaseNode:
             frame = tk.Frame(right_frame.middle_section, bg="lightyellow")
             frame.pack(fill=tk.X, padx=5, pady=2)
             check_var = tk.BooleanVar(value=value.get("display", False))
-            check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow", command=lambda k=key, l=key: self.nodeUI.on_check(k, l))
+            check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow", command=lambda k=key, l=key: self.nodeUI.on_check(k, l) if self.nodeUI is not None else None)
             check_button.pack(side=tk.LEFT)
             label = tk.Label(frame, text=key, bg="lightyellow")
             label.pack(side=tk.LEFT, padx=5)
@@ -119,8 +119,13 @@ class Node:
         self.node_id=node_id
         self.rect = parent.canvas.create_rectangle(x1, y1, x2, y2, fill="white", tags=node_id)
         self.text = parent.canvas.create_text((x1 + x2) // 2, (y1 + y2) // 2, text=self.nodeClass.nodeName, tags=node_id)
+        self.rectPoint = (x1,y1,x2,y2)
         # All pin creation and mapping handled in create_pins
-        self.pins = self.create_pins(parent.canvas, x1, y1, y2, x2)
+        self.pins = {
+            "input_pin":{},
+            "output_pin":{}
+            }
+        self.create_pins(parent.canvas)
 
         # Play button
         self.play_button = parent.canvas.create_rectangle(x2 - 45, y1, x2 - 30, y1 + 15, fill="green", tags=node_id)
@@ -150,11 +155,12 @@ class Node:
     def move(self, dx, dy):
         self.parent.canvas.move(self.rect, dx, dy)
         self.parent.canvas.move(self.text, dx, dy)
-        # Move input pins and texts
+        # Move input/output pins and their texts
         for pin_types in self.pins.values():
-            for pin_type in pin_types.values():
-                for pin in pin_type:
-                    self.parent.canvas.move(pin, dx, dy)
+            for pin_tuple in pin_types.values():
+                pin, text, _ = pin_tuple
+                self.parent.canvas.move(pin, dx, dy)
+                self.parent.canvas.move(text, dx, dy)
         # Move the delete button and its text
         self.parent.canvas.move(self.delete_button, dx, dy)
         self.parent.canvas.move(self.delete_text, dx, dy)
@@ -166,8 +172,7 @@ class Node:
         self.parent.canvas.move(self.stop_text, dx, dy)
 
         # Update connected lines using Connection class
-        # all_pins now contains (pin, text) tuples, so extract pin only
-        all_pins = [pin for (pin, text) in self.pins['input_pin'].values()] + [pin for (pin, text) in self.pins['output_pin'].values()]
+        all_pins = [pin for (pin, text, _) in self.pins['input_pin'].values()] + [pin for (pin, text, _) in self.pins['output_pin'].values()]
         for connection in self.parent.canvas.master.connections.values():
             if (connection.input_pin in all_pins) or (connection.output_pin in all_pins):
                 start_coords = self.parent.canvas.coords(connection.output_pin)
@@ -194,7 +199,7 @@ class Node:
         # Delete input pins and texts
         input_texts = self.pins['input_texts'] if 'input_texts' in self.pins else []
         for pin_types in self.pins.values():
-            for pin,text in pin_types.values():
+            for pin,text,_ in pin_types.values():
                 self.parent.canvas.delete(pin)
                 self.parent.canvas.delete(text)
                 self.parent.canvas.master.remove_connection(pin)  # Remove connections for input pins
@@ -234,54 +239,42 @@ class Node:
             except Exception as e:
                 print(f"Error executing functions for node {node.node_id}: {e}")
         node.nodeClass.updateNodeDetailUi(node.parent.parent.right_frame)
-    def create_pins(self, canvas, x1, y1, y2, x2):
+    def create_pins(self, canvas):
         # Prepare input and output keys
         input_keys = [k for k, v in self.nodeClass.values.items() if v.get("display", False)]
         output_keys = [k for k in self.nodeClass.outputs.keys()]
 
         # Remove 'input' from input_keys if present
         input_keys = [label for label in input_keys if label != 'input']
+        for label in input_keys:
+            self.create_pin(canvas, 'input', label) 
+        for label in output_keys:
+            self.create_pin(canvas, 'output', label)
 
-        # Create input pins
-        input_pins = []
-        input_texts = []
-        num_inputs = len(input_keys)
-        for i, label in enumerate(input_keys):
-            pin_y = y1 + (i + 1) * (y2 - y1) // (num_inputs + 1)
-            pin, text = self.create_pin(canvas, x1, pin_y, 'input', label)
-            input_pins.append(pin)
-            input_texts.append(text)
 
-        # Create output pins
-        output_pins = []
-        output_texts = []
-        num_outputs = len(output_keys)
-        for i, label in enumerate(output_keys):
-            pin_y = y1 + (i + 1) * (y2 - y1) // (num_outputs + 1)
-            pin, text = self.create_pin(canvas, x2, pin_y, 'output', label)
-            output_pins.append(pin)
-            output_texts.append(text)
-
-        # pins dict structure: {'input_pin': {text: pin, ...}, 'output_pin': {text: pin, ...},
-        #   'input_pins': [...], 'input_texts': [...], 'output_pins': [...], 'output_texts': [...]}
-        return {
-            'input_pin': {key: (pin,text) for text, pin,key in zip(input_texts, input_pins,input_keys)},
-            'output_pin': {key: (pin,text) for text, pin,key in zip(output_texts, output_pins,output_keys)},
-        }
-
-    def create_pin(self, canvas, x, pin_y, pin_type, label):
+    def create_pin(self, canvas, pin_type, label):
+        x1,y,x2,y2=self.rectPoint
+        y+=10
         if pin_type == "input":
-            pin_x1, pin_y1 = x - 10, pin_y - 5
-            pin_x2, pin_y2 = x, pin_y + 5
+            x1-=5
+            num=self.set_pin_num("input_pin")
+            y+=num*10
+            pin_x1, pin_y1 = x1 - 5, y - 5
+            pin_x2, pin_y2 = x1 + 5, y + 5
             pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
-            text = canvas.create_text(pin_x1 - 20, pin_y, anchor="e", text=label)
+            text = canvas.create_text(pin_x1 - 20, pin_y2, anchor="e", text=label)
             canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
+            self.pins["input_pin"][label]=(pin,text,num)
         elif pin_type == "output":
-            pin_x1, pin_y1 = x, pin_y - 5
-            pin_x2, pin_y2 = x + 10, pin_y + 5
+            num=self.set_pin_num("output_pin")
+            x2+=5
+            y+=num*10
+            pin_x1, pin_y1 = x2 - 5, y - 5
+            pin_x2, pin_y2 = x2 + 5, y + 5
             pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
-            text = canvas.create_text(pin_x2 + 20, pin_y, anchor="w", text=label)
+            text = canvas.create_text(pin_x2 + 20, pin_y2, anchor="w", text=label)
             canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
+            self.pins["output_pin"][label]=(pin,text,num)
         else:
             pin = None
             text = None
@@ -302,8 +295,19 @@ class Node:
         if checked:
             pass
         else:
-            pin,text=self.pins["input_pin"].pop(key)
+            pin,text,_=self.pins["input_pin"].pop(key)
             self.parent.canvas.delete(pin)
             self.parent.canvas.delete(text)
             self.parent.canvas.master.remove_connection(pin) 
         print(f"Checkbutton clicked for key: {key}, label: {label}, checked: {checked}")
+    def set_pin_num(self, typeName):
+        # Get (pin, text, num) tuples and sort by num
+        tuples = self.pins.get(typeName,{}).values()
+        sorted_tuples = sorted(tuples, key=lambda t: t[-1])
+        i = 0
+        for _,_,num in sorted_tuples:
+            if i==num:
+                i+=1
+            else:
+                return i
+        return i

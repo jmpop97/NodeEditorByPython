@@ -51,12 +51,6 @@ class BurfNode(BaseNode):
         if not base_url:
             base_url = "https://www.google.com"
         url = base_url + path
-        # Parse body as dict
-        print("\nURL:\n", url)
-        print("\nHEADERS:")
-        for k, v in headers.items():
-            print(f"  {k}: {v}")
-        print("\nDATA:")
 
         self.outputs = {
             "method": method,

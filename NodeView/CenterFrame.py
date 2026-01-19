@@ -71,7 +71,6 @@ class CenterFrame(tk.Frame):
             nodes = self.nodes
         else:
             nodes = self.selected_nodes
-        print(nodes)
         # Sort nodes by node.priority (ascending)
         sorted_nodes = dict(sorted(nodes.items(), key=lambda item: getattr(item[1], 'priority', 0)))
         name = self.name_entry.get()
@@ -178,19 +177,23 @@ class CenterFrame(tk.Frame):
             if output_node and hasattr(output_node, 'pins'):
                 output_pin_tuple = output_node.pins['output_pin'].get(output_label)
                 if output_pin_tuple:
-                    output_pin, _ = output_pin_tuple
+                    output_pin, _,_ = output_pin_tuple
                 else:
                     output_pin = None
             if input_node and hasattr(input_node, 'pins'):
                 input_pin_tuple = input_node.pins['input_pin'].get(input_label)
                 if input_pin_tuple:
-                    input_pin, _ = input_pin_tuple
+                    input_pin, _,_ = input_pin_tuple
                 else:
                     input_pin = None
             if output_node and input_node and output_pin is not None and input_pin is not None:
                 self.connect_pins(output_pin, input_pin, output_node, input_node, output_label, input_label)
 
     def connect_pins(self, output_pin, input_pin, output_node, input_node, output_label, input_label):
+        # Prevent duplicate connections
+        key = tuple(sorted([input_pin, output_pin], key=id))
+        if key in self.connections:
+            return  # Already connected, do not create again
         # Draw a line between the two pins
         start_coords = self.canvas.coords(output_pin)
         end_coords = self.canvas.coords(input_pin)
@@ -204,20 +207,7 @@ class CenterFrame(tk.Frame):
         )
         # Move the line behind the pins
         self.canvas.tag_lower(line_id)
-        # Store with key sorted by id for uniqueness
-        key = tuple(sorted([input_pin, output_pin], key=id))
         self.connections[key] = Connection(output_pin, input_pin, output_node, input_node, output_label, input_label, line_id)
-        # Update ChildNode mapping for output_node
-        if output_node is not None:
-            if not hasattr(output_node, 'ChildNode'):
-                output_node.ChildNode = {}
-            if input_node not in output_node.ChildNode:
-                output_node.ChildNode[input_node] = {}
-            # output_label을 리스트로 관리
-            if output_label not in output_node.ChildNode[input_node]:
-                output_node.ChildNode[input_node][output_label] = []
-            if input_label not in output_node.ChildNode[input_node][output_label]:
-                output_node.ChildNode[input_node][output_label].append(input_label)
 
     def remove_connection(self, pin):
         # Remove connections associated with a pin
@@ -299,6 +289,7 @@ class CenterFrame(tk.Frame):
             dy = y - coords[1]
             # Move all selected nodes (no duplicates)
             moved_ids = set()
+
             for node_id, node in self.selected_nodes.items():
                 if node_id not in moved_ids:
                     node.move(dx, dy)

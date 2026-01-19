@@ -49,7 +49,6 @@ class RequestNode(BaseNode):
                 headers = {}
             response = requests.request(method.upper(), url, headers=headers, data=data)
             output = response.text
-            print(output)
         except Exception as e:
             output = str(e)
         self.outputs = {
