@@ -1,7 +1,7 @@
 import tkinter as tk
 from NodeView.Node import nodeFuction
 
-class RightFrame(tk.Frame):
+class NodeDetailView(tk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent, width=200, bg="lightblue")
         self.node = None

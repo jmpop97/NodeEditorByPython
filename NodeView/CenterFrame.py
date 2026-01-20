@@ -14,15 +14,10 @@ class Connection:
         self.input_label = input_label
         self.output_pin = output_pin
         self.line_id = line_id
-
-
-class CenterFrame(tk.Frame):
-    def __init__(self, parent, app):  # Pass app as parent
-        super().__init__(parent, width=200, bg="white")
-        self.parent = app  # Store the reference to the app
-        self.pack_propagate(False)
-
-        # --- UI for name/description and save button ---
+class NodeTopView(tk.Frame):
+    def __init__(self, window, parent):
+        super().__init__(parent, width=100, bg="white")
+        self.parent = parent
         top_frame = tk.Frame(self, bg="white")
         top_frame.pack(fill=tk.X, padx=5, pady=5)
 
@@ -37,40 +32,13 @@ class CenterFrame(tk.Frame):
         save_btn = tk.Button(top_frame, text="저장", command=self.save_selected_node_info)
         save_btn.pack(side=tk.LEFT)
 
-        # Add a canvas to draw nodes
-        self.canvas = Canvas(self, bg="gray")
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-
-        # Store references to nodes
-        self.nodes = {}
-        self.node_num=0
-        self.selected_node: Optional[Node] = None
-        self.selected_nodes: dict[int, Node] = {}  # For multi-selection, key=node_id
-        self.select_rect_id = None  # Rectangle ID for selection box
-        self.select_start = None  # (x, y) start position for selection
-        self.selected_pin: dict[str, Optional[tuple[int, Node,str]]] = {
-            "input": None,
-            "output": None
-        }  # Track the currently selected pin
-        self.offset_x = 0
-        self.offset_y = 0
-
-        # Store connections as a dict: key=(start_pin, end_pin), value=Connection
-        self.connections = {}
-
-        # Bind mouse events for node interaction
-        self.canvas.bind("<Button-1>", self.on_canvas_click)
-        self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
-        self.canvas.bind("<ButtonRelease-1>", self.on_release)
-        self.canvas.bind("<Button-3>", self.on_right_click)  # Bind right-click to remove connection
-
     def save_selected_node_info(self):
         # Save name/description to all selected nodes (if any)
         nodes = {}
-        if not self.selected_nodes:
-            nodes = self.nodes
+        if not self.parent.selected_nodes:
+            nodes = self.parent.nodes
         else:
-            nodes = self.selected_nodes
+            nodes = self.parent.selected_nodes
         # Sort nodes by node.priority (ascending)
         sorted_nodes = dict(sorted(nodes.items(), key=lambda item: getattr(item[1], 'priority', 0)))
         name = self.name_entry.get()
@@ -84,11 +52,8 @@ class CenterFrame(tk.Frame):
         for i, node in enumerate(sorted_nodes.values()):
             node_name = i
             node_id_dic[node.node_id] = node_name
-            # Get node coordinates
-            if hasattr(node, 'get_coords'):
-                coords = node.get_coords()
-            else:
-                coords = (None, None, None, None)
+            coords = node.get_coords()
+
             node_data = {
                 'node_id': node_name,
                 'className': type(node.nodeClass).__name__,
@@ -102,7 +67,7 @@ class CenterFrame(tk.Frame):
 
         # Save connections related to selected nodes
         connections_data = []
-        for key, conn in self.connections.items():
+        for key, conn in self.parent.connections.items():
             output_node_id = getattr(conn.output_node, 'node_id', None)
             input_node_id = getattr(conn.input_node, 'node_id', None)
             if output_node_id in sorted_nodes and input_node_id in sorted_nodes:
@@ -131,9 +96,46 @@ class CenterFrame(tk.Frame):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(save_data, f, ensure_ascii=False, indent=2)
         print("save", file_path)
-        self.parent.left_frame.refresh()
+        self.parent.parent.nodeListView.refresh()
         messagebox.showinfo("저장 완료", "노드 및 연결 정보가 성공적으로 저장되었습니다.")
         # Optionally, clear fields or show a message
+
+class NodeView(tk.Frame):
+    def __init__(self, window, parent):  # Pass app as parent
+        super().__init__(window, width=200, bg="white")
+        self.parent = parent  # Store the reference to the app
+        self.pack_propagate(False)
+
+        # --- NodeTopView (NodeView 내부 위쪽, name/desc/save UI) ---
+        self.node_top_view = NodeTopView(window, self)
+        self.node_top_view.pack(fill=tk.X, padx=5, pady=5)
+
+        # Add a canvas to draw nodes
+        self.canvas = Canvas(self, bg="gray")
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        # Store references to nodes
+        self.nodes = {}
+        self.node_num=0
+        self.selected_node: Optional[Node] = None
+        self.selected_nodes: dict[int, Node] = {}  # For multi-selection, key=node_id
+        self.select_rect_id = None  # Rectangle ID for selection box
+        self.select_start = None  # (x, y) start position for selection
+        self.selected_pin: dict[str, Optional[tuple[int, Node,str]]] = {
+            "input": None,
+            "output": None
+        }  # Track the currently selected pin
+        self.offset_x = 0
+        self.offset_y = 0
+
+        # Store connections as a dict: key=(start_pin, end_pin), value=Connection
+        self.connections = {}
+
+        # Bind mouse events for node interaction
+        self.canvas.bind("<Button-1>", self.on_canvas_click)
+        self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
+        self.canvas.bind("<ButtonRelease-1>", self.on_release)
+        self.canvas.bind("<Button-3>", self.on_right_click)  # Bind right-click to remove connection
 
     def add_node(self, node_class, x1=50, y1=50, x2=150, y2=100):
         # Create a new Node instance with multiple input and output pins
@@ -148,7 +150,7 @@ class CenterFrame(tk.Frame):
         for node_info in nodes_data:
             className = node_info.get('className')
             node_id = node_info.get('node_id')
-            node_class = self.parent.left_frame.get_node_by_classname(className)
+            node_class = self.parent.nodeListView.get_node_by_classname(className)
             coords = node_info.get('coords', (50, 50, 150, 100))
             x1, y1, x2, y2 = coords
             node = self.add_node(node_class, x1, y1, x2, y2)

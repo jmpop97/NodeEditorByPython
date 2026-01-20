@@ -1,7 +1,7 @@
 import tkinter as tk
-from NodeView.CenterFrame import CenterFrame # Add this import at the top of the file
+from NodeView.CenterFrame import NodeView # Add this import at the top of the file
 from NodeListView.NodeListView import NodeListView
-from NodeDetailView.RightFrame import RightFrame
+from NodeDetailView.RightFrame import NodeDetailView
 class NodeEditor(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -13,12 +13,12 @@ class NodeEditor(tk.Tk):
         self.paned_window.pack(fill=tk.BOTH, expand=True)
 
         # Add frames to the PanedWindow
-        self.right_frame = RightFrame(self.paned_window, self)  # Pass self as parent
-        self.center_frame = CenterFrame(self.paned_window, self)  # Pass self as parent
-        self.left_frame = NodeListView(self.paned_window, self)  # Pass self as parent
+        self.nodeListView = NodeListView(self.paned_window, self)  # Pass self as parent
+        self.nodeView = NodeView(self.paned_window, self)  # Pass self as parent
+        self.right_frame = NodeDetailView(self.paned_window, self)  # Pass self as parent
 
-        self.paned_window.add(self.left_frame, stretch="always")
-        self.paned_window.add(self.center_frame, stretch="always")
+        self.paned_window.add(self.nodeListView, stretch="always")
+        self.paned_window.add(self.nodeView, stretch="always")
         self.paned_window.add(self.right_frame, stretch="always")
 
 
