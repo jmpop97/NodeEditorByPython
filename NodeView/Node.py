@@ -2,8 +2,8 @@
 import tkinter as tk
 from typing import Optional
 
-class BaseNode:
-    def __init__(self) -> None:
+class nodeFuction:
+    def __init__(self,node) -> None:
         self.description = ""
         self.nodeName = ""
         self.values = {
@@ -12,7 +12,7 @@ class BaseNode:
         self.outputs = {
             # "output1": 0,
         }
-        self.nodeUI: Optional[Node] = None
+        self.nodeUI=node
     def functions(self):
         # return []
         pass
@@ -107,19 +107,41 @@ class BaseNode:
             right_frame.value_widgets[key] = (text_widget, check_var)
 
 
+    def createNodeUI(self):
+        node = self.nodeUI
+        x1, y1, x2, y2 = node.rectPoint
+        node.nodeUI = [node.parent.canvas.create_text(
+            (x1 + x2) // 2,
+            (y1 + y2) // 2,
+            text=self.nodeName,
+            tags=node.node_id
+        )]
+
+    def moveUI(self, dx, dy):
+        node = self.nodeUI
+        # nodeUI가 리스트(캔버스 아이템 id들)일 때 각각 이동
+        if node and hasattr(node, 'nodeUI') and isinstance(node.nodeUI, list):
+            for item in node.nodeUI:
+                node.parent.canvas.move(item, dx, dy)
+    def delete(self):
+        node=self.nodeUI
+        for items in node.nodeUI:
+            node.parent.canvas.delete(items)
+        
 class Node:
-    def __init__(self, parent, Node_class: BaseNode, x1, y1, x2, y2):
+    def __init__(self, parent, Node_class, x1, y1, x2, y2):
         self.ChildNode = {}
-        self.nodeClass = Node_class
-        Node_class.nodeUI = self
+        self.rectPoint = (x1,y1,x2,y2)
         self.parent  = parent
+        self.nodeClass = Node_class(self)
+        (x1,y1,x2,y2) = self.rectPoint
         parent.node_num+=1
         node_id=self.parent.node_num
         self.priority = node_id  # 우선순위 속성 추가
         self.node_id=node_id
-        self.rect = parent.canvas.create_rectangle(x1, y1, x2, y2, fill="white", tags=node_id)
-        self.text = parent.canvas.create_text((x1 + x2) // 2, (y1 + y2) // 2, text=self.nodeClass.nodeName, tags=node_id)
-        self.rectPoint = (x1,y1,x2,y2)
+        self.rect = parent.canvas.create_rectangle(*self.rectPoint, fill="white", tags=node_id)
+        self.nodeUI = []
+        self.nodeClass.createNodeUI()
         # All pin creation and mapping handled in create_pins
         self.pins = {
             "input_pin":{},
@@ -153,8 +175,11 @@ class Node:
 
 
     def move(self, dx, dy):
+        x1, y1, x2, y2 = self.rectPoint
+        self.rectPoint = (x1 + dx, y1 + dy, x2 + dx, y2 + dy)
         self.parent.canvas.move(self.rect, dx, dy)
-        self.parent.canvas.move(self.text, dx, dy)
+        # 일반 노드: self.nodeUI(Canvas item), TextNode: self.nodeUI(list of widgets)
+        self.nodeClass.moveUI(dx, dy)
         # Move input/output pins and their texts
         for pin_types in self.pins.values():
             for pin_tuple in pin_types.values():
@@ -195,7 +220,9 @@ class Node:
     def on_delete(self, event):
         # Remove all associated canvas items
         self.parent.canvas.delete(self.rect)
-        self.parent.canvas.delete(self.text)
+        # 일반 노드: self.nodeUI(Canvas item), TextNode: self.nodeUI(list of widgets)
+        self.nodeClass.delete()
+
         # Delete input pins and texts
         for pin_types in self.pins.values():
             for pin,text,_ in pin_types.values():
@@ -217,7 +244,7 @@ class Node:
                 del self.parent.canvas.master.nodes[node_id]
                 break
         # Update RightFrame with a new BaseNode instance
-        self.parent.canvas.master.parent.right_frame.update_node_details(BaseNode())
+        self.parent.canvas.master.parent.right_frame.update_node_details(nodeFuction(None))
 
     def on_play(self, event):
         # Priority queue: (priority, node)
@@ -244,7 +271,6 @@ class Node:
         output_keys = [k for k in self.nodeClass.outputs.keys()]
 
         # Remove 'input' from input_keys if present
-        input_keys = [label for label in input_keys if label != 'input']
         for label in input_keys:
             self.create_pin(canvas, 'input', label) 
         for label in output_keys:

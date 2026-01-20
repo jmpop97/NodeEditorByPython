@@ -1,6 +1,6 @@
-from NodeView.Node import BaseNode
-class TestNode(BaseNode):
-    def __init__(self) -> None:
+from NodeView.Node import nodeFuction
+class TestNode(nodeFuction):
+    def __init__(self,node) -> None:
         self.description = "test"
         self.nodeName="test"
         self.values = {
@@ -10,6 +10,7 @@ class TestNode(BaseNode):
             "output1": 1,
             "output2": 2,
         }
+        self.nodeUI=node
 
     def functions(self):
         input1 = self.values["input1"]["value"]

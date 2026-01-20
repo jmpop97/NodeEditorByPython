@@ -1,10 +1,10 @@
-from NodeView.Node import BaseNode
+from NodeView.Node import nodeFuction
 import tkinter as tk
 import requests
 import json
 
-class RequestNode(BaseNode):
-    def __init__(self) -> None:
+class RequestNode(nodeFuction):
+    def __init__(self,node) -> None:
         self.description = "request"
         self.nodeName = "Request"
         self.values = {
@@ -32,9 +32,11 @@ class RequestNode(BaseNode):
         self.outputs = {
             "response": "",
         }
+        self.nodeUI=node
 
     def functions(self):
         try:
+            import urllib.parse
             method = self.values.get("method", {}).get("value", "GET")
             url = self.values.get("url", {}).get("value", "")
             headers = self.values.get("headers", {}).get("value", "")
@@ -47,7 +49,15 @@ class RequestNode(BaseNode):
                     headers = {}
             if not isinstance(headers, dict):
                 headers = {}
-            response = requests.request(method.upper(), url, headers=headers, data=data)
+
+            # URL에서 쿼리 파라미터 파싱
+            parsed_url = urllib.parse.urlparse(url)
+            base_url = urllib.parse.urlunparse(parsed_url._replace(query=""))
+            params = urllib.parse.parse_qs(parsed_url.query)
+            # parse_qs는 값이 리스트로 반환되므로, 단일 값이면 값만 추출
+            params = {k: v[0] if len(v) == 1 else v for k, v in params.items()}
+
+            response = requests.request(method.upper(), base_url, headers=headers, data=data, params=params if params else None)
             output = response.text
         except Exception as e:
             output = str(e)

@@ -1,23 +1,27 @@
-from NodeView.Node import BaseNode
+from NodeView.Node import nodeFuction
 import tkinter as tk
 import requests
 import json
+from urllib.parse import urlparse, parse_qs
 
-class BurfNode(BaseNode):
-    def __init__(self) -> None:
+class BurfNode(nodeFuction):
+    def __init__(self,node) -> None:
         self.description = "burf suite"
         self.nodeName = "burf suite"
         self.values = {
             "text": {
                 "value": """""", 
-                "display": True},
+                "display": True
+            },
         }
         self.outputs = {
             "method": "",
             "url": "",
+            "param": "",
             "headers": "",
-            "data":"",
+            "data": "",
         }
+        self.nodeUI=node
 
     def functions(self):
         # Parse the POST body text into a dict and store in values["parsed"]
@@ -52,9 +56,14 @@ class BurfNode(BaseNode):
             base_url = "https://www.google.com"
         url = base_url + path
 
+        # param 구분 (쿼리스트링)
+        parsed_url = urlparse(path)
+        param = parse_qs(parsed_url.query)
+
         self.outputs = {
             "method": method,
             "url": url,
+            "param": param,
             "headers": headers,
             "data": "",
         }

@@ -1,5 +1,5 @@
 import tkinter as tk
-from NodeView.Node import BaseNode
+from NodeView.Node import nodeFuction
 
 class RightFrame(tk.Frame):
     def __init__(self, parent, app):
@@ -30,28 +30,22 @@ class RightFrame(tk.Frame):
         self.description_textbox = tk.Entry(self.top_section)
         self.description_textbox.pack(fill=tk.X, padx=5, pady=2)
 
-        self.node_name_textbox.bind("<KeyRelease>", lambda event: self.update_node_name(self.node, self.node_name_textbox.get()) if self.node else None)
+        # Print changed node name value when it is updated
+        self.node_name_textbox.bind("<KeyRelease>", lambda event: self.print_and_update_node_name(self.node, self.node_name_textbox.get()) if self.node else None)
         self.description_textbox.bind("<KeyRelease>", lambda event: self.update_description(self.node, self.description_textbox.get()) if self.node else None)
 
         self.value_widgets = {}
         self.output_labels = {}
 
-    def update_node_details(self, node: BaseNode):
+    def update_node_details(self, node: nodeFuction):
         self.node = node
         node.updateNodeDetailUi(self)
 
-    def update_node_name(self, node: BaseNode, new_name: str):
-        if node and new_name:
-            node.nodeName = new_name
-            selected_item = self.parent.left_frame.tree.selection()
-            if selected_item:
-                self.parent.left_frame.tree.item(selected_item[0], text=new_name)
-            for node_id, n in self.parent.center_frame.nodes.items():
-                if n.node == node:
-                    n.update_id()
-                    break
+    def update_node_name(self, node: nodeFuction, new_name: str):
+        text=node.nodeUI.nodeUI[0]
+        node.nodeUI.parent.canvas.itemconfig(text, text=new_name)
 
-    def update_description(self, node: BaseNode, new_description: str):
+    def update_description(self, node: nodeFuction, new_description: str):
         if node and new_description:
             node.description = new_description
             for key, label in self.output_labels.items():
@@ -73,3 +67,7 @@ class RightFrame(tk.Frame):
             if key in self.value_widgets:
                 entry, check_var = self.value_widgets[key]
                 check_var.set(new_display)
+
+    def print_and_update_node_name(self, node: nodeFuction, new_name: str):
+        print(f"Node name changed to: {new_name}")
+        self.update_node_name(node, new_name)

@@ -1,7 +1,7 @@
-from NodeView.Node import BaseNode
+from NodeView.Node import nodeFuction
 
-class AddNode(BaseNode):
-    def __init__(self):
+class AddNode(nodeFuction):
+    def __init__(self,node):
         self.description = "Addition of two numbers"
         self.nodeName = "Add"
         self.values = {
@@ -11,6 +11,7 @@ class AddNode(BaseNode):
         self.outputs = {
             "output": 0,
         }
+        self.nodeUI=node
 
     def functions(self):
         input1 = self.values["input1"]["value"]

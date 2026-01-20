@@ -137,7 +137,7 @@ class CenterFrame(tk.Frame):
 
     def add_node(self, node_class, x1=50, y1=50, x2=150, y2=100):
         # Create a new Node instance with multiple input and output pins
-        node = Node(self, node_class(), x1, y1, x2, y2)
+        node = Node(self, node_class, x1, y1, x2, y2)
         self.nodes[node.node_id] = node
         return node
     def add_nodes(self, nodes_info):

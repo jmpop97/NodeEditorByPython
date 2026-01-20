@@ -2,7 +2,7 @@ import os
 import importlib
 import tkinter as tk
 from tkinter import ttk
-from NodeView.Node import BaseNode  # Ensure this import is correct
+from NodeView.Node import nodeFuction  # Ensure this import is correct
 
 class NodeListView(tk.Frame):
     def __init__(self, parent, app):  # Pass app as parent
@@ -42,10 +42,11 @@ class NodeListView(tk.Frame):
                 module_name = f"funtions.{filename[:-3]}"
                 module = importlib.import_module(module_name)
                 node_class = getattr(module, filename[:-3])
-                node_instance = node_class()
-                node_name = getattr(node_instance, "nodeName", filename[:-3])
-                node_type = getattr(node_instance, "nodeType", "Node")
-                node_data.append((node_name, node_type, node_instance.description, node_class))
+                node_instance = node_class(None)
+                node_name = getattr(node_instance, "nodeName", filename[:-3]) if node_instance else filename[:-3]
+                node_type = getattr(node_instance, "nodeType", "Node") if node_instance else "Node"
+                description = getattr(node_instance, "description", "") if node_instance else ""
+                node_data.append((node_name, node_type, description, node_class))
             elif filename.endswith(".json"):
                 json_path = os.path.join(funtions_dir, filename)
                 try:

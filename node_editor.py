@@ -1,11 +1,5 @@
 import tkinter as tk
-from tkinter import Canvas, ttk
-from funtions.TestNode import TestNode
-import os
-import importlib
-from NodeView.Node import Node, BaseNode
-from NodeView.CenterFrame import CenterFrame
-from typing import Optional  # Add this import at the top of the file
+from NodeView.CenterFrame import CenterFrame # Add this import at the top of the file
 from NodeListView.NodeListView import NodeListView
 from NodeDetailView.RightFrame import RightFrame
 class NodeEditor(tk.Tk):
