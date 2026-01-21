@@ -112,7 +112,6 @@ class nodeFuction:
         # frame_window가 Frame이고, 내부에 canvas가 있다면 사용
         # frame_window가 tk.Frame인 경우에는 별도 처리하지 않음
 class NodeBlock:
-
     def __init__(self, parent, Node_class, x, y, width=150, height=100):
         self.ChildNode = {}
         self.rectPoint = (x,y,width,height)
@@ -132,8 +131,9 @@ class NodeBlock:
         self.frame = tk.Frame(parent.canvas.master, bg="white", highlightthickness=0)
         self.frame_window = parent.canvas.create_window(x1, y1, anchor="nw", window=self.frame, width=width, height=height)
         
-        self._drag_data = {"x": 0, "y": 0, "last_x": 0, "last_y": 0}
+        self._drag_data = {"x": 0, "y": 0, "last_x": 0, "last_y": 0, "moved": False}
         self.frame.bind("<ButtonPress-1>", self._on_frame_press)
+        self.frame.bind("<ButtonRelease-1>", self._on_frame_release)  # <- 새로 추가
         self.frame.bind("<B1-Motion>", self._on_frame_drag)
         
         self.create_pins(parent.canvas)
@@ -165,7 +165,6 @@ class NodeBlock:
         return btn
 
     def _on_frame_press(self, event):
-        # Save the mouse position relative to the root window
         widget = event.widget
         abs_x = widget.winfo_rootx() + event.x
         abs_y = widget.winfo_rooty() + event.y
@@ -173,7 +172,35 @@ class NodeBlock:
         self._drag_data["y"] = abs_y
         self._drag_data["last_x"] = abs_x
         self._drag_data["last_y"] = abs_y
+        # Do not clear selected_nodes on click-drag
+        ctrl_pressed = (event.state & 0x0004) != 0  # Tkinter state mask for Ctrl
+        if ctrl_pressed:
+            self.select(ctrl=True)
+        else:
+            self.select(ctrl=False)
+        # Do not modify parent.selected_nodes here to preserve selection during drag
 
+    def select(self, ctrl=False):
+        if ctrl:
+            if self.selected:
+                self.set_selected(False)
+                self.frame.config(bg="white")
+                if self.node_id in self.parent.selected_nodes:
+                    del self.parent.selected_nodes[self.node_id]
+            else:
+                self.set_selected(True)
+                self.parent.selected_nodes[self.node_id] = self
+                self.frame.config(bg="blue")
+        else:
+            # Deselect all nodes except this one
+            for n in self.parent.nodes.values():
+                n.set_selected(False)
+                if hasattr(n, 'frame'):
+                    n.frame.config(bg="white")
+            self.parent.selected_nodes.clear()
+            self.set_selected(True)
+            self.parent.selected_nodes[self.node_id] = self
+            self.frame.config(bg="blue")
     def _on_frame_drag(self, event):
         widget = event.widget
         abs_x = widget.winfo_rootx() + event.x
@@ -182,7 +209,18 @@ class NodeBlock:
         dy = abs_y - self._drag_data["last_y"]
         self._drag_data["last_x"] = abs_x
         self._drag_data["last_y"] = abs_y
+        if dx != 0 or dy != 0:
+            self._drag_data["moved"] = True  # 실제로 움직였으면 moved 플래그 True
         self.move(dx, dy)
+
+    def _on_frame_release(self, event):
+        # 드래그가 아니면(즉 클릭)만 선택 처리
+        if not self._drag_data.get("moved", False):
+            ctrl_pressed = (event.state & 0x0004) != 0  # Ctrl 키 체크
+            if ctrl_pressed:
+                self.select(ctrl=True)
+            else:
+                self.select(ctrl=False)
     def on_stop(self, event):
         # Toggle stop button color between gray and red
         self.stop_button_state = not self.stop_button_state
@@ -203,30 +241,37 @@ class NodeBlock:
             )
             # Move border below pins but above frame
             self.parent.canvas.tag_lower(self.selection_border_id, self.frame_window)
+            # Also set frame color to blue
+            self.frame.config(bg="blue")
         else:
             if self.selection_border_id is not None:
                 self.parent.canvas.delete(self.selection_border_id)
                 self.selection_border_id = None
+            # Reset frame color to white
+            self.frame.config(bg="white")
 
     def get_coords(self):
         x, y, width, height = self.rectPoint
         return (x, y, width, height)
 
     def move(self, dx, dy):
-        # rectPoint는 (x, y, width, height)
+        # Move all selected nodes if self is in selected_nodes, else move only self
+        selected_nodes = getattr(self.parent, 'selected_nodes', None)
+        if selected_nodes and self in selected_nodes:
+            for node in selected_nodes:
+                node._move_single(dx, dy)
+        else:
+            self._move_single(dx, dy)
+
+    def _move_single(self, dx, dy):
         x, y, width, height = self.rectPoint
         self.rectPoint = (x + dx, y + dy, width, height)
-        # Move the frame_window (the window containing the frame)
         self.parent.canvas.move(self.frame_window, dx, dy)
-        # 일반 노드: self.nodeUI(Canvas item), TextNode: self.nodeUI(list of widgets)
-        # Move input/output pins and their texts
         for pin_types in self.pins.values():
             for pin_tuple in pin_types.values():
                 pin, text, _ = pin_tuple
                 self.parent.canvas.move(pin, dx, dy)
                 self.parent.canvas.move(text, dx, dy)
-        # (버튼, 텍스트 등 추가 이동 필요시 여기에)
-        # 연결선 등은 필요시 복구
         if self.selected and self.selection_border_id is not None:
             self.parent.canvas.move(self.selection_border_id, dx, dy)
 

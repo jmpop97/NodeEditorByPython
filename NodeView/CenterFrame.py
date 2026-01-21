@@ -143,7 +143,7 @@ class NodeView(tk.Frame):
         # Create a new Node instance with multiple input and output pins
         node = NodeBlock(self, node_class, x1, y1, x2, y2)
         self.nodes[node.node_id] = node
-        # Remove single-click selection binding for this behavior
+        # Bind click for selection (single and ctrl+multi)
         return node
     def add_nodes(self, nodes_info):
         nodes_data = nodes_info.get('nodes', [])
@@ -289,7 +289,7 @@ class NodeView(tk.Frame):
             if self.select_rect_id is not None:
                 self.canvas.delete(self.select_rect_id)
             self.select_rect_id = self.canvas.create_rectangle(
-                x0, y0, x1, y1, outline="blue", width=2, dash=(2,2)
+                x0, y0, x1, y1, outline="blue", width=2
             )
 
     def on_canvas_release(self, event):
@@ -306,6 +306,9 @@ class NodeView(tk.Frame):
             # Deselect all nodes first
             for node in self.nodes.values():
                 node.set_selected(False)
+                # Change node frame color to default (white)
+                if hasattr(node, 'frame'):
+                    node.frame.config(bg="white")
             self.selected_nodes.clear()
             # Select nodes inside rectangle
             for node_id, node in self.nodes.items():
@@ -314,6 +317,8 @@ class NodeView(tk.Frame):
                     y >= y_min and y + height <= y_max):
                     node.set_selected(True)
                     self.selected_nodes[node_id] = node
+                    # Change node frame color to blue for selected
+                    node.frame.config(bg="blue")
             # If none selected, clear selected_nodes
             if not self.selected_nodes:
                 self.selected_nodes = {}
