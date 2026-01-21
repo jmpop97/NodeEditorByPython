@@ -14,29 +14,29 @@ class nodeFuction:
     def functions(self):
         # return []
         pass
-    def updateNodeDetailUi(self, right_frame=None):
-        """
-        Update the UI in the given RightFrame to reflect this node's details.
-        """
-        if right_frame is None:
-            return
-        right_frame.node_name_textbox.delete(0, right_frame.node_name_textbox.get().__len__())
-        right_frame.node_name_textbox.delete(0, 'end')
-        right_frame.node_name_textbox.insert(0, self.nodeName)
-        right_frame.description_textbox.delete(0, 'end')
-        right_frame.description_textbox.insert(0, self.description)
-        for widget in right_frame.middle_section.winfo_children():
-            widget.destroy()
-        right_frame.value_widgets.clear()
-        # self.inputUI(right_frame)
-        for widget in right_frame.bottom_section.winfo_children():
-            widget.destroy()
-        right_frame.output_labels.clear()
-        # self.outputUI(right_frame)
+    # def updateNodeDetailUi(self, node_detail_frame,node_frame):
+    #     """
+    #     Update the UI in the given RightFrame to reflect this node's details.
+    #     """
+    #     if node_detail_frame is None:
+    #         return
+    #     node_detail_frame.node_name_textbox.delete(0, node_detail_frame.node_name_textbox.get().__len__())
+    #     node_detail_frame.node_name_textbox.delete(0, 'end')
+    #     node_detail_frame.node_name_textbox.insert(0, self.nodeName)
+    #     node_detail_frame.description_textbox.delete(0, 'end')
+    #     node_detail_frame.description_textbox.insert(0, self.description)
+    #     for widget in node_detail_frame.middle_section.winfo_children():
+    #         widget.destroy()
+    #     node_detail_frame.value_widgets.clear()
+    #     # self.inputUI(right_frame)
+    #     for widget in node_detail_frame.bottom_section.winfo_children():
+    #         widget.destroy()
+    #     node_detail_frame.output_labels.clear()
+    #     # self.outputUI(right_frame)
 
-    def outputUI(self, right_frame):
+    def outputUI(self,nodeDetailFrame,nodeFrame):
         for key, value in self.outputs.items():
-            frame = tk.Frame(right_frame.bottom_section, bg="lightpink")
+            frame = tk.Frame(nodeDetailFrame.bottom_section, bg="lightpink")
             frame.pack(fill=tk.X, padx=5, pady=2)
             label = tk.Label(frame, text=f"{key}:", bg="lightpink")
             label.pack(side=tk.LEFT, padx=(0,5))
@@ -44,14 +44,14 @@ class nodeFuction:
             text_widget.insert("1.0", str(value))
             text_widget.config(state="disabled")
             text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
-            right_frame.output_labels[key] = text_widget
+            nodeDetailFrame.output_labels[key] = text_widget
 
-    def inputUI(self, right_frame):
+    def inputUI(self, right_frame,node_frame):
         for key, value in self.values.items():
             frame = tk.Frame(right_frame.middle_section, bg="lightyellow")
             frame.pack(fill=tk.X, padx=5, pady=2)
             check_var = tk.BooleanVar(value=value.get("display", False))
-            check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow", command=lambda k=key, l=key: self.nodeUI.on_check(k, l) if self.nodeUI is not None else None)
+            check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow", command=lambda k=key, l=key: node_frame.on_check(k, l) if self.nodeUI is not None else None)
             check_button.pack(side=tk.LEFT)
             label = tk.Label(frame, text=key, bg="lightyellow")
             label.pack(side=tk.LEFT, padx=5)
@@ -338,8 +338,8 @@ class NodeBlock:
     def on_output_pin_click(self, pin_label, node):
         print(f"Output pin '{pin_label}' clicked (Node: {self.nodeClass.nodeName})")
     def on_check(self, key, label):
-        right_frame = self.parent.parent.right_frame
-        checked = right_frame.value_widgets[key][1].get()
+        nodeDetailView = self.parent.parent.nodeDetailView
+        checked = nodeDetailView.value_widgets[key][1].get()
         if checked:
             self.create_pin(self.parent.canvas,"input",label)
         else:
@@ -376,8 +376,8 @@ class NodeBlock:
             pass
         else:
             self.parent.selected_node=self
-            self.nodeClass.outputUI(self.parent.parent.nodeDetailView)       
-            self.nodeClass.inputUI(self.parent.parent.nodeDetailView)       
+            self.nodeClass.outputUI(self.parent.parent.nodeDetailView,self)
+            self.nodeClass.inputUI(self.parent.parent.nodeDetailView,self)       
     def _on_frame_release(self, event):
         # 드래그가 아니면(즉 클릭)만 선택 처리
         if not self._drag_data.get("moved", False):

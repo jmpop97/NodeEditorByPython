@@ -37,14 +37,6 @@ class NodeDetailView(tk.Frame):
         self.value_widgets = {}
         self.output_labels = {}
 
-    def update_node_details(self, node: nodeFuction):
-        self.node = node
-        node.updateNodeDetailUi(self)
-
-    def update_node_name(self, node: nodeFuction, new_name: str):
-        text=node.nodeUI.nodeUI[0]
-        node.nodeUI.parent.canvas.itemconfig(text, text=new_name)
-
     def update_description(self, node: nodeFuction, new_description: str):
         if node and new_description:
             node.description = new_description
@@ -70,4 +62,4 @@ class NodeDetailView(tk.Frame):
 
     def print_and_update_node_name(self, node: nodeFuction, new_name: str):
         print(f"Node name changed to: {new_name}")
-        self.update_node_name(node, new_name)
+

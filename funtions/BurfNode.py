@@ -67,23 +67,3 @@ class BurfNode(nodeFuction):
             "headers": headers,
             "data": "",
         }
-    def outputUI(self, right_frame):
-        for key, value in self.outputs.items():
-            frame = tk.Frame(right_frame.bottom_section, bg="lightpink")
-            frame.pack(fill=tk.X, padx=5, pady=2)
-            label = tk.Label(frame, text=f"{key}:", bg="lightpink")
-            label.pack(side=tk.LEFT, padx=(0,5))
-            # value가 JSON 형식이면 보기 좋게 정렬
-            formatted = str(value)
-            try:
-                parsed_json = json.loads(value)
-                formatted = json.dumps(parsed_json, ensure_ascii=False, indent=2)
-            except Exception:
-                pass
-            # 줄 수 계산 (최소 2줄)
-            num_lines = max(formatted.count('\n') + 1, 2)
-            text_widget = tk.Text(frame, height=num_lines, wrap="word", bg="#ffe4ec")
-            text_widget.insert("1.0", formatted)
-            text_widget.config(state="disabled")
-            text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
-            right_frame.output_labels[key] = text_widget
