@@ -202,10 +202,10 @@ class NodeBlock:
         self._drag_data["last_x"] = abs_x
         self._drag_data["last_y"] = abs_y
         if dx != 0 or dy != 0:
-            if not self._drag_data["moved"]:
-                print("drag")
             self._drag_data["moved"] = True  # 실제로 움직였으면 moved 플래그 True
-        self.move(dx, dy)
+        for node in self.parent.selected_nodes.values():
+            print(node)
+            node.move(dx, dy)
 
     def _on_frame_release(self, event):
         # 드래그가 아니면(즉 클릭)만 선택 처리
@@ -250,15 +250,6 @@ class NodeBlock:
         return (x, y, width, height)
 
     def move(self, dx, dy):
-        # Move all selected nodes if self is in selected_nodes, else move only self
-        selected_nodes = getattr(self.parent, 'selected_nodes', None)
-        if selected_nodes and self in selected_nodes:
-            for node in selected_nodes:
-                node._move_single(dx, dy)
-        else:
-            self._move_single(dx, dy)
-
-    def _move_single(self, dx, dy):
         x, y, width, height = self.rectPoint
         self.rectPoint = (x + dx, y + dy, width, height)
         self.parent.canvas.move(self.frame_window, dx, dy)
