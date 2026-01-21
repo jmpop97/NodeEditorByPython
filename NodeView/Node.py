@@ -1,9 +1,8 @@
-
 import tkinter as tk
 from typing import Optional
 
 class nodeFuction:
-    def __init__(self,node) -> None:
+    def __init__(self) -> None:
         self.description = ""
         self.nodeName = ""
         self.values = {
@@ -12,7 +11,6 @@ class nodeFuction:
         self.outputs = {
             # "output1": 0,
         }
-        self.nodeUI=node
     def functions(self):
         # return []
         pass
@@ -106,67 +104,85 @@ class nodeFuction:
             check_var.trace_add("write", lambda *args, key=key, check_var=check_var: right_frame.update_node_display(key, check_var.get()) if right_frame.node else None)
             right_frame.value_widgets[key] = (text_widget, check_var)
 
+    def nodeUI(self, nodeBlock):
+        nodeBlock.hello_label = tk.Label(nodeBlock.frame, text="안녕", bg="white")
+        nodeBlock.hello_label.grid(row=1, column=1, sticky="w", padx=(0,2), pady=(2,0))
+        nodeBlock.hello_entry = tk.Entry(nodeBlock.frame, width=12)
+        nodeBlock.hello_entry.grid(row=1, column=2, columnspan=2, sticky="w", padx=(0,2), pady=(2,0))
+        # frame_window가 Frame이고, 내부에 canvas가 있다면 사용
+        # frame_window가 tk.Frame인 경우에는 별도 처리하지 않음
+class NodeBlock:
 
-    def createNodeUI(self):
-        node = self.nodeUI
-        x1, y1, x2, y2 = node.rectPoint
-        node.nodeUI = [node.parent.canvas.create_text(
-            (x1 + x2) // 2,
-            (y1 + y2) // 2,
-            text=self.nodeName,
-            tags=node.node_id
-        )]
-
-    def moveUI(self, dx, dy):
-        node = self.nodeUI
-        # nodeUI가 리스트(캔버스 아이템 id들)일 때 각각 이동
-        if node and hasattr(node, 'nodeUI') and isinstance(node.nodeUI, list):
-            for item in node.nodeUI:
-                node.parent.canvas.move(item, dx, dy)
-    def delete(self):
-        node=self.nodeUI
-        for items in node.nodeUI:
-            node.parent.canvas.delete(items)
-        
-class Node:
-    def __init__(self, parent, Node_class, x1, y1, x2, y2):
+    def __init__(self, parent, Node_class, x, y, width=150, height=100):
         self.ChildNode = {}
-        self.rectPoint = (x1,y1,x2,y2)
+        self.rectPoint = (x,y,width,height)
         self.parent  = parent
-        self.nodeClass = Node_class(self)
+        self.nodeClass = Node_class()
         (x1,y1,x2,y2) = self.rectPoint
         parent.node_num+=1
         node_id=self.parent.node_num
         self.priority = node_id  # 우선순위 속성 추가
         self.node_id=node_id
-        self.rect = parent.canvas.create_rectangle(*self.rectPoint, fill="white", tags=node_id)
-        self.nodeUI = []
-        self.nodeClass.createNodeUI()
+        # self.nodeClass.createNodeUI()
         # All pin creation and mapping handled in create_pins
         self.pins = {
             "input_pin":{},
             "output_pin":{}
             }
+        self.frame = tk.Frame(parent.canvas.master, bg="white", highlightthickness=0)
+        self.frame_window = parent.canvas.create_window(x1, y1, anchor="nw", window=self.frame, width=width, height=height)
+        
+        self._drag_data = {"x": 0, "y": 0, "last_x": 0, "last_y": 0}
+        self.frame.bind("<ButtonPress-1>", self._on_frame_press)
+        self.frame.bind("<B1-Motion>", self._on_frame_drag)
+        
         self.create_pins(parent.canvas)
 
-        # Play button
-        self.play_button = parent.canvas.create_rectangle(x2 - 45, y1, x2 - 30, y1 + 15, fill="green", tags=node_id)
-        self.play_text = parent.canvas.create_text(x2 - 37, y1 + 7, text="▶", fill="white", tags=node_id)
-        parent.canvas.tag_bind(self.play_button, "<Button-1>", self.on_play)
-        parent.canvas.tag_bind(self.play_text, "<Button-1>", self.on_play)
-
-        # Stop button (square, with text)
+        # Create a frame for buttons at the top (height 10)
+        self.button_frame = tk.Frame(self.frame, bg="white", height=10)
+        self.button_frame.pack(fill=tk.X, side=tk.TOP)
+        self.button_frame.bind("<ButtonPress-1>", self._on_frame_press)
+        self.button_frame.bind("<B1-Motion>", self._on_frame_drag)
+        # Create a frame for function UI below the button frame
+        self.function_frame = tk.Frame(self.frame, bg="white")
+        self.function_frame.pack(fill=tk.BOTH, expand=True, side=tk.TOP)
+        self.function_frame.bind("<ButtonPress-1>", self._on_frame_press)
+        self.function_frame.bind("<B1-Motion>", self._on_frame_drag)
+        # Move buttons to button_frame
         self.stop_button_state = False  # False: gray, True: red
-        self.stop_button = parent.canvas.create_rectangle(x2 - 30, y1, x2 - 15, y1 + 15, fill="gray", tags=node_id)
-        self.stop_text = parent.canvas.create_text(x2 - 22, y1 + 7, text="■", fill="white", tags=node_id)
-        parent.canvas.tag_bind(self.stop_button, "<Button-1>", self.on_stop)
-        parent.canvas.tag_bind(self.stop_text, "<Button-1>", self.on_stop)
+        # Add a stretchable empty column to push buttons to the right
+        self.button_frame.grid_columnconfigure(0, weight=1)
+        self.play_button = self.createButton(self.button_frame, "▶", "green", lambda: self.on_play(None), row=0, column=1)
+        self.stop_button = self.createButton(self.button_frame, "■", "gray", lambda: self.on_stop(None), row=0, column=2)
+        self.delete_button = self.createButton(self.button_frame, "X", "gray", lambda: self.on_delete(None), row=0, column=3)
+        # self.nodeClass.nodeUI(self)
+        self.selected = False
+        self.selection_border_id = None
+        
+    def createButton(self, parent, text, bg, command, row, column):
+        btn = tk.Button(parent, text=text, bg=bg, fg="white", width=2, height=1, command=command)
+        btn.grid(row=row, column=column, sticky="e", padx=(0,2), pady=(2,0))
+        return btn
 
-        # Delete button
-        self.delete_button = parent.canvas.create_rectangle(x2 - 15, y1, x2, y1 + 15, fill="gray", tags=node_id)
-        self.delete_text = parent.canvas.create_text(x2 - 7, y1 + 7, text="X", fill="white", tags=node_id)
-        parent.canvas.tag_bind(self.delete_button, "<Button-1>", self.on_delete)
-        parent.canvas.tag_bind(self.delete_text, "<Button-1>", self.on_delete)
+    def _on_frame_press(self, event):
+        # Save the mouse position relative to the root window
+        widget = event.widget
+        abs_x = widget.winfo_rootx() + event.x
+        abs_y = widget.winfo_rooty() + event.y
+        self._drag_data["x"] = abs_x
+        self._drag_data["y"] = abs_y
+        self._drag_data["last_x"] = abs_x
+        self._drag_data["last_y"] = abs_y
+
+    def _on_frame_drag(self, event):
+        widget = event.widget
+        abs_x = widget.winfo_rootx() + event.x
+        abs_y = widget.winfo_rooty() + event.y
+        dx = abs_x - self._drag_data["last_x"]
+        dy = abs_y - self._drag_data["last_y"]
+        self._drag_data["last_x"] = abs_x
+        self._drag_data["last_y"] = abs_y
+        self.move(dx, dy)
     def on_stop(self, event):
         # Toggle stop button color between gray and red
         self.stop_button_state = not self.stop_button_state
@@ -174,77 +190,65 @@ class Node:
         self.parent.canvas.itemconfig(self.stop_button, fill=color)
 
 
+    def set_selected(self, selected: bool):
+        self.selected = selected
+        if selected:
+            # Draw blue border rectangle around the node frame
+            x, y, width, height = self.rectPoint
+            if self.selection_border_id is not None:
+                self.parent.canvas.delete(self.selection_border_id)
+            self.selection_border_id = self.parent.canvas.create_rectangle(
+                x-2, y-2, x+width+2, y+height+2,
+                outline="blue", width=3
+            )
+            # Move border below pins but above frame
+            self.parent.canvas.tag_lower(self.selection_border_id, self.frame_window)
+        else:
+            if self.selection_border_id is not None:
+                self.parent.canvas.delete(self.selection_border_id)
+                self.selection_border_id = None
+
+    def get_coords(self):
+        x, y, width, height = self.rectPoint
+        return (x, y, width, height)
+
     def move(self, dx, dy):
-        x1, y1, x2, y2 = self.rectPoint
-        self.rectPoint = (x1 + dx, y1 + dy, x2 + dx, y2 + dy)
-        self.parent.canvas.move(self.rect, dx, dy)
+        # rectPoint는 (x, y, width, height)
+        x, y, width, height = self.rectPoint
+        self.rectPoint = (x + dx, y + dy, width, height)
+        # Move the frame_window (the window containing the frame)
+        self.parent.canvas.move(self.frame_window, dx, dy)
         # 일반 노드: self.nodeUI(Canvas item), TextNode: self.nodeUI(list of widgets)
-        self.nodeClass.moveUI(dx, dy)
         # Move input/output pins and their texts
         for pin_types in self.pins.values():
             for pin_tuple in pin_types.values():
                 pin, text, _ = pin_tuple
                 self.parent.canvas.move(pin, dx, dy)
                 self.parent.canvas.move(text, dx, dy)
-        # Move the delete button and its text
-        self.parent.canvas.move(self.delete_button, dx, dy)
-        self.parent.canvas.move(self.delete_text, dx, dy)
-        # Move the play button and its text
-        self.parent.canvas.move(self.play_button, dx, dy)
-        self.parent.canvas.move(self.play_text, dx, dy)
-        # Move the stop button and its text
-        self.parent.canvas.move(self.stop_button, dx, dy)
-        self.parent.canvas.move(self.stop_text, dx, dy)
-
-        # Update connected lines using Connection class
-        all_pins = [pin for (pin, text, _) in self.pins['input_pin'].values()] + [pin for (pin, text, _) in self.pins['output_pin'].values()]
-        for connection in self.parent.canvas.master.connections.values():
-            if (connection.input_pin in all_pins) or (connection.output_pin in all_pins):
-                start_coords = self.parent.canvas.coords(connection.output_pin)
-                end_coords = self.parent.canvas.coords(connection.input_pin)
-                self.parent.canvas.coords(
-                    connection.line_id,
-                    (start_coords[0] + start_coords[2]) // 2,
-                    (start_coords[1] + start_coords[3]) // 2,
-                    (end_coords[0] + end_coords[2]) // 2,
-                    (end_coords[1] + end_coords[3]) // 2
-                )
-
-    def get_coords(self):
-        return self.parent.canvas.coords(self.rect)
-
-    def is_inside(self, x, y):
-        coords = self.get_coords()
-        return coords[0] <= x <= coords[2] and coords[1] <= y <= coords[3]
+        # (버튼, 텍스트 등 추가 이동 필요시 여기에)
+        # 연결선 등은 필요시 복구
+        if self.selected and self.selection_border_id is not None:
+            self.parent.canvas.move(self.selection_border_id, dx, dy)
 
     def on_delete(self, event):
-        # Remove all associated canvas items
-        self.parent.canvas.delete(self.rect)
-        # 일반 노드: self.nodeUI(Canvas item), TextNode: self.nodeUI(list of widgets)
-        self.nodeClass.delete()
-
         # Delete input pins and texts
         for pin_types in self.pins.values():
             for pin,text,_ in pin_types.values():
                 self.parent.canvas.delete(pin)
                 self.parent.canvas.delete(text)
                 self.parent.canvas.master.remove_connection(pin)  # Remove connections for input pins
-        # Delete output pins and texts
-        self.parent.canvas.delete(self.delete_button)
-        self.parent.canvas.delete(self.delete_text)
-        # Remove the play button and its text
-        self.parent.canvas.delete(self.play_button)
-        self.parent.canvas.delete(self.play_text)
-        # Remove the stop button and its text
-        self.parent.canvas.delete(self.stop_button)
-        self.parent.canvas.delete(self.stop_text)
-        # Remove the node from the center frame's node dictionary
-        for node_id, node in self.parent.canvas.master.nodes.items():
-            if node == self:
-                del self.parent.canvas.master.nodes[node_id]
-                break
-        # Update RightFrame with a new BaseNode instance
-        self.parent.canvas.master.parent.right_frame.update_node_details(nodeFuction(None))
+        self.frame.destroy()
+        self.parent.canvas.delete(self.frame_window)
+        if self.selection_border_id is not None:
+            self.parent.canvas.delete(self.selection_border_id)
+
+        # # Remove the node from the center frame's node dictionary
+        # for node_id, node in self.parent.canvas.master.nodes.items():
+        #     if node == self:
+        #         del self.parent.canvas.master.nodes[node_id]
+        #         break
+        # # Update RightFrame with a new BaseNode instance
+        # self.parent.canvas.master.parent.right_frame.update_node_details(nodeFuction(None))
 
     def on_play(self, event):
         # Priority queue: (priority, node)
@@ -254,14 +258,19 @@ class Node:
             play_functions.sort(key=lambda x: x[0])
             priority, node = play_functions.pop(0)
             try:
-                outputValues=node.nodeClass.functions()
+                outputValues = node.nodeClass.functions()
                 # Update child nodes and add them to play_functions
+                print(node.ChildNode)
+                print(outputValues)
                 for input_node, dic in node.ChildNode.items():
                     for output, inputList in dic.items():
                         if outputValues and not (output in outputValues):
                             continue
                         for input in inputList:
                             input_node.nodeClass.values[input]["value"] = node.nodeClass.outputs[output]
+                        # Add input_node to play_functions if not already in play_functions
+                    if not any(n == input_node for _, n in play_functions):
+                        play_functions.append((input_node.priority, input_node))
             except Exception as e:
                 print(f"Error executing functions for node {node.node_id}: {e}")
         node.nodeClass.updateNodeDetailUi(node.parent.parent.right_frame)
@@ -278,28 +287,28 @@ class Node:
 
 
     def create_pin(self, canvas, pin_type, label):
-        x1,y,x2,y2=self.rectPoint
-        y+=10
+        x, y, width, height = self.rectPoint
+        y += 10
         if pin_type == "input":
-            x1-=5
-            num=self.set_pin_num("input_pin")
-            y+=num*10
+            x1 = x-5  # input은 x
+            num = self.set_pin_num("input_pin")
+            y += num * 10
             pin_x1, pin_y1 = x1 - 5, y - 5
             pin_x2, pin_y2 = x1 + 5, y + 5
             pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
             text = canvas.create_text(pin_x1 - 20, pin_y2, anchor="e", text=label)
             canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
-            self.pins["input_pin"][label]=(pin,text,num)
+            self.pins["input_pin"][label] = (pin, text, num)
         elif pin_type == "output":
-            num=self.set_pin_num("output_pin")
-            x2+=5
-            y+=num*10
+            x2 = x + width+5  # output은 x+width
+            num = self.set_pin_num("output_pin")
+            y += num * 10
             pin_x1, pin_y1 = x2 - 5, y - 5
             pin_x2, pin_y2 = x2 + 5, y + 5
             pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
             text = canvas.create_text(pin_x2 + 20, pin_y2, anchor="w", text=label)
             canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
-            self.pins["output_pin"][label]=(pin,text,num)
+            self.pins["output_pin"][label] = (pin, text, num)
         else:
             pin = None
             text = None

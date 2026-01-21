@@ -39,7 +39,7 @@ class NodeListView(tk.Frame):
                 module_name = f"funtions.{filename[:-3]}"
                 module = importlib.import_module(module_name)
                 node_class = getattr(module, filename[:-3])
-                node_instance = node_class(None)
+                node_instance = node_class()
                 node_name = getattr(node_instance, "nodeName", filename[:-3]) if node_instance else filename[:-3]
                 node_type = getattr(node_instance, "nodeType", "Node") if node_instance else "Node"
                 description = getattr(node_instance, "description", "") if node_instance else ""

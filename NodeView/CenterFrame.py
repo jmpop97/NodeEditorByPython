@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import Canvas
-from NodeView.Node import Node
+from NodeView.Node import NodeBlock
 from typing import Optional
 import json
 import os
@@ -117,11 +117,11 @@ class NodeView(tk.Frame):
         # Store references to nodes
         self.nodes = {}
         self.node_num=0
-        self.selected_node: Optional[Node] = None
-        self.selected_nodes: dict[int, Node] = {}  # For multi-selection, key=node_id
+        self.selected_node: Optional[NodeBlock] = None
+        self.selected_nodes: dict[int, NodeBlock] = {}  # For multi-selection, key=node_id
         self.select_rect_id = None  # Rectangle ID for selection box
         self.select_start = None  # (x, y) start position for selection
-        self.selected_pin: dict[str, Optional[tuple[int, Node,str]]] = {
+        self.selected_pin: dict[str, Optional[tuple[int, NodeBlock,str]]] = {
             "input": None,
             "output": None
         }  # Track the currently selected pin
@@ -132,15 +132,18 @@ class NodeView(tk.Frame):
         self.connections = {}
 
         # Bind mouse events for node interaction
-        self.canvas.bind("<Button-1>", self.on_canvas_click)
+        # Bind right-click to remove connection
+
+        # Bind mouse events for selection rectangle
+        self.canvas.bind("<ButtonPress-1>", self.on_canvas_press)
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
-        self.canvas.bind("<ButtonRelease-1>", self.on_release)
-        self.canvas.bind("<Button-3>", self.on_right_click)  # Bind right-click to remove connection
+        self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
 
     def add_node(self, node_class, x1=50, y1=50, x2=150, y2=100):
         # Create a new Node instance with multiple input and output pins
-        node = Node(self, node_class, x1, y1, x2, y2)
+        node = NodeBlock(self, node_class, x1, y1, x2, y2)
         self.nodes[node.node_id] = node
+        # Remove single-click selection binding for this behavior
         return node
     def add_nodes(self, nodes_info):
         nodes_data = nodes_info.get('nodes', [])
@@ -152,8 +155,7 @@ class NodeView(tk.Frame):
             node_id = node_info.get('node_id')
             node_class = self.parent.nodeListView.get_node_by_classname(className)
             coords = node_info.get('coords', (50, 50, 150, 100))
-            x1, y1, x2, y2 = coords
-            node = self.add_node(node_class, x1, y1, x2, y2)
+            node = self.add_node(node_class)
             # Set nodeName, description, values, outputs if present
             if hasattr(node, 'nodeClass'):
                 if 'nodeName' in node_info:
@@ -211,6 +213,15 @@ class NodeView(tk.Frame):
         self.canvas.tag_lower(line_id)
         self.connections[key] = Connection(output_pin, input_pin, output_node, input_node, output_label, input_label, line_id)
 
+        # Add to ChildNode mapping (reverse of remove_connection)
+        if not hasattr(output_node, 'ChildNode'):
+            output_node.ChildNode = {}
+        if input_node not in output_node.ChildNode:
+            output_node.ChildNode[input_node] = {}
+        if output_label not in output_node.ChildNode[input_node]:
+            output_node.ChildNode[input_node][output_label] = []
+        if input_label not in output_node.ChildNode[input_node][output_label]:
+            output_node.ChildNode[input_node][output_label].append(input_label)
     def remove_connection(self, pin):
         # Remove connections associated with a pin
         to_remove = []
@@ -235,103 +246,6 @@ class NodeView(tk.Frame):
                 to_remove.append(key)
         for key in to_remove:
             del self.connections[key]
-
-    def on_canvas_click(self, event):
-        # Start selection rectangle
-        self.select_start = (event.x, event.y)
-        ctrl_pressed = (event.state & 0x0004) != 0  # 0x0004 is the mask for Control key
-        self.selected_node = None
-        overlapping_items = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
-        found_node = False
-        for item in reversed(overlapping_items):
-            for node_id, node in self.nodes.items():
-                if item == node.rect and node.is_inside(event.x, event.y):
-                    self.selected_node = node
-                    coords = node.get_coords()
-                    self.offset_x = event.x - coords[0]
-                    self.offset_y = event.y - coords[1]
-                    # Ctrl+Click: add/remove node from selection
-                    if ctrl_pressed:
-                        if node_id in self.selected_nodes:
-                            del self.selected_nodes[node_id]
-                            self.canvas.itemconfig(node.rect, outline="black", width=1)
-                        else:
-                            self.selected_nodes[node_id] = node
-                            self.canvas.itemconfig(node.rect, outline="blue", width=3)
-                    else:
-                        # If already selected, do not reset selection (for drag)
-                        if node_id in self.selected_nodes:
-                            # Just prep for drag, keep selection
-                            pass
-                        else:
-                            # Normal click: select only this node
-                            self.selected_nodes = {node_id: node}
-                            self.canvas.itemconfig(node.rect, outline="blue", width=3)
-                            # Notify RightFrame about the selected node
-                            if self.selected_node:
-                                self.parent.right_frame.update_node_details(self.selected_node.nodeClass)
-                    found_node = True
-                    break
-            if found_node:
-                break
-        if not found_node and not ctrl_pressed:
-            # Clicked empty space: clear selection
-            self.selected_nodes = {}
-        # Reset all unselected nodes to default appearance
-        for node_id, node in self.nodes.items():
-            if node_id not in self.selected_nodes:
-                self.canvas.itemconfig(node.rect, outline="black", width=1)
-
-    def on_canvas_drag(self, event):
-        # If a node is selected, drag all selected nodes together
-        if self.selected_node:
-            x, y = event.x - self.offset_x, event.y - self.offset_y
-            coords = self.selected_node.get_coords()
-            dx = x - coords[0]
-            dy = y - coords[1]
-            # Move all selected nodes (no duplicates)
-            moved_ids = set()
-
-            for node_id, node in self.selected_nodes.items():
-                if node_id not in moved_ids:
-                    node.move(dx, dy)
-                    moved_ids.add(node_id)
-        else:
-            # Draw selection rectangle
-            if self.select_start:
-                x0, y0 = self.select_start
-                x1, y1 = event.x, event.y
-                if self.select_rect_id:
-                    self.canvas.coords(self.select_rect_id, x0, y0, x1, y1)
-                else:
-                    self.select_rect_id = self.canvas.create_rectangle(x0, y0, x1, y1, outline="blue", dash=(2,2))
-                # Highlight nodes inside the rectangle
-                self.selected_nodes = {}
-                for node_id, node in self.nodes.items():
-                    nx1, ny1, nx2, ny2 = node.get_coords()
-                    # Check if node is inside selection rectangle
-                    if (min(x0, x1) <= nx1 and nx2 <= max(x0, x1) and
-                        min(y0, y1) <= ny1 and ny2 <= max(y0, y1)):
-                        self.selected_nodes[node_id] = node
-                        self.canvas.itemconfig(node.rect, outline="blue", width=3)
-                    else:
-                        self.canvas.itemconfig(node.rect, outline="black", width=1)
-
-    def on_release(self, event):
-        # End selection rectangle
-        if self.select_rect_id:
-            self.canvas.delete(self.select_rect_id)
-            self.select_rect_id = None
-        self.select_start = None
-        # If nodes were selected by rectangle, update their appearance
-        if self.selected_nodes:
-            for node_id, node in self.nodes.items():
-                if node_id in self.selected_nodes:
-                    self.canvas.itemconfig(node.rect, outline="blue", width=3)
-                else:
-                    self.canvas.itemconfig(node.rect, outline="black", width=1)
-        self.selected_node = None
-
     def on_pin_click(self, pin, pin_type: str, label,node):
         # pin_type: 'input' or 'output'
 
@@ -351,21 +265,55 @@ class NodeView(tk.Frame):
             return
         # Check if both pins are selected
         if self.selected_pin["input"] and self.selected_pin["output"]:
-            (input_pin, input_node,input_label) = self.selected_pin["input"]
-            (output_pin, output_node,output_label) = self.selected_pin["output"]
+            (input_pin, input_node,inputLabel) = self.selected_pin["input"]
+            (output_pin, output_node,outputLabel) = self.selected_pin["output"]
             # Connect pins
-            self.connect_pins(output_pin, input_pin, output_node, input_node,output_label,input_label)
+            self.connect_pins(output_pin, input_pin, output_node, input_node,outputLabel,inputLabel)
             # Reset pin colors
             self.canvas.itemconfig(input_pin, fill="white")
             self.canvas.itemconfig(output_pin, fill="white")
             self.selected_pin = {"input": None, "output": None}
-        
-    def on_right_click(self, event):
-        # Detect if a line (connection) is clicked
-        overlapping_items = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
-        for item in overlapping_items:
-            for key, connection in list(self.connections.items()):
-                if item == connection.line_id:
-                    self.canvas.delete(connection.line_id)
-                    del self.connections[key]
-                    return
+
+    def on_canvas_press(self, event):
+        # Start selection rectangle
+        self.select_start = (event.x, event.y)
+        if self.select_rect_id is not None:
+            self.canvas.delete(self.select_rect_id)
+            self.select_rect_id = None
+
+    def on_canvas_drag(self, event):
+        # Draw selection rectangle
+        if self.select_start:
+            x0, y0 = self.select_start
+            x1, y1 = event.x, event.y
+            if self.select_rect_id is not None:
+                self.canvas.delete(self.select_rect_id)
+            self.select_rect_id = self.canvas.create_rectangle(
+                x0, y0, x1, y1, outline="blue", width=2, dash=(2,2)
+            )
+
+    def on_canvas_release(self, event):
+        # Select nodes within the rectangle
+        if self.select_start:
+            x0, y0 = self.select_start
+            x1, y1 = event.x, event.y
+            x_min, x_max = min(x0, x1), max(x0, x1)
+            y_min, y_max = min(y0, y1), max(y0, y1)
+            self.select_start = None
+            if self.select_rect_id is not None:
+                self.canvas.delete(self.select_rect_id)
+                self.select_rect_id = None
+            # Deselect all nodes first
+            for node in self.nodes.values():
+                node.set_selected(False)
+            self.selected_nodes.clear()
+            # Select nodes inside rectangle
+            for node_id, node in self.nodes.items():
+                x, y, width, height = node.get_coords()
+                if (x >= x_min and x + width <= x_max and
+                    y >= y_min and y + height <= y_max):
+                    node.set_selected(True)
+                    self.selected_nodes[node_id] = node
+            # If none selected, clear selected_nodes
+            if not self.selected_nodes:
+                self.selected_nodes = {}

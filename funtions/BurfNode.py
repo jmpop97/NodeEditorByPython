@@ -5,7 +5,7 @@ import json
 from urllib.parse import urlparse, parse_qs
 
 class BurfNode(nodeFuction):
-    def __init__(self,node) -> None:
+    def __init__(self) -> None:
         self.description = "burf suite"
         self.nodeName = "burf suite"
         self.values = {
@@ -21,7 +21,7 @@ class BurfNode(nodeFuction):
             "headers": "",
             "data": "",
         }
-        self.nodeUI=node
+
 
     def functions(self):
         # Parse the POST body text into a dict and store in values["parsed"]
