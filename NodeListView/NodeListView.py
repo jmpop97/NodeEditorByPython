@@ -37,7 +37,7 @@ class NodeListView(tk.Frame):
         for filename in os.listdir(funtions_dir):
             if filename.endswith(".py"):
                 module_name = f"funtions.{filename[:-3]}"
-                module = importlib.import_module(module_name)
+                module = importlib.import_module(module_name)                
                 node_class = getattr(module, filename[:-3])
                 node_instance = node_class()
                 node_name = getattr(node_instance, "nodeName", filename[:-3]) if node_instance else filename[:-3]

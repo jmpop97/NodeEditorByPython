@@ -14,41 +14,22 @@ class nodeFuction:
     def functions(self):
         # return []
         pass
-    # def updateNodeDetailUi(self, node_detail_frame,node_frame):
-    #     """
-    #     Update the UI in the given RightFrame to reflect this node's details.
-    #     """
-    #     if node_detail_frame is None:
-    #         return
-    #     node_detail_frame.node_name_textbox.delete(0, node_detail_frame.node_name_textbox.get().__len__())
-    #     node_detail_frame.node_name_textbox.delete(0, 'end')
-    #     node_detail_frame.node_name_textbox.insert(0, self.nodeName)
-    #     node_detail_frame.description_textbox.delete(0, 'end')
-    #     node_detail_frame.description_textbox.insert(0, self.description)
-    #     for widget in node_detail_frame.middle_section.winfo_children():
-    #         widget.destroy()
-    #     node_detail_frame.value_widgets.clear()
-    #     # self.inputUI(right_frame)
-    #     for widget in node_detail_frame.bottom_section.winfo_children():
-    #         widget.destroy()
-    #     node_detail_frame.output_labels.clear()
-    #     # self.outputUI(right_frame)
+    def updateDetailUI(self,nodeDetailFrame,nodeFrame):
+        self.nameUI(nodeDetailFrame,nodeFrame)
+        self.inputUI(nodeDetailFrame,nodeFrame)
+        self.outputUI(nodeDetailFrame,nodeFrame)
+    def nameUI(self, nodeDetailView, node_frame):
+        # Set the node name textbox value to self.nodeName
+        nodeDetailView.node_name_textbox.delete(0, tk.END)
+        nodeDetailView.node_name_textbox.insert(0, self.nodeName)
+        nodeDetailView.description_textbox.delete(0, tk.END)
+        nodeDetailView.description_textbox.insert(0, self.description)
 
-    def outputUI(self,nodeDetailFrame,nodeFrame):
-        for key, value in self.outputs.items():
-            frame = tk.Frame(nodeDetailFrame.bottom_section, bg="lightpink")
-            frame.pack(fill=tk.X, padx=5, pady=2)
-            label = tk.Label(frame, text=f"{key}:", bg="lightpink")
-            label.pack(side=tk.LEFT, padx=(0,5))
-            text_widget = tk.Text(frame, height=2, wrap="word", bg="#ffe4ec")
-            text_widget.insert("1.0", str(value))
-            text_widget.config(state="disabled")
-            text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
-            nodeDetailFrame.output_labels[key] = text_widget
-
-    def inputUI(self, right_frame,node_frame):
+    def inputUI(self, nodeDetailView,node_frame):
+        for widget in nodeDetailView.middle_section.winfo_children():
+            widget.destroy()
         for key, value in self.values.items():
-            frame = tk.Frame(right_frame.middle_section, bg="lightyellow")
+            frame = tk.Frame(nodeDetailView.middle_section, bg="lightyellow")
             frame.pack(fill=tk.X, padx=5, pady=2)
             check_var = tk.BooleanVar(value=value.get("display", False))
             check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow", command=lambda k=key, l=key: node_frame.on_check(k, l) if self.nodeUI is not None else None)
@@ -66,22 +47,19 @@ class nodeFuction:
                 text_widget.insert(0, str(value.get("value", "")))
                 text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
                 def on_entry_change(event, key=key, text_widget=text_widget):
-                    if right_frame.node:
+                    if nodeDetailView.node:
                         try:
                             value = int(text_widget.get())
                         except ValueError:
                             value = 0
-                        right_frame.update_node_value(key, value)
+                        nodeDetailView.update_node_value(key, value)
                 text_widget.bind("<KeyRelease>", on_entry_change)
             elif widget_type == "str":
                 # Text 위젯, 한 줄만 보이게
                 text_widget = tk.Text(text_frame, height=1, wrap="none")
                 text_widget.insert("1.0", value.get("value", ""))
                 text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
-                def on_text_change(event, key=key, text_widget=text_widget):
-                    if right_frame.node:
-                        right_frame.update_node_value(key, text_widget.get("1.0", tk.END).rstrip("\n"))
-                text_widget.bind("<KeyRelease>", on_text_change)
+                text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_text_change(event, key, text_widget, nodeDetailView))
             else:
                 # 기본: Text 위젯, 여러 줄
                 text_widget = tk.Text(text_frame, height=5, wrap="none")
@@ -97,13 +75,26 @@ class nodeFuction:
                 def _resize_text(event, text_widget=text_widget):
                     text_widget.config(width=max(10, int(text_widget.winfo_width() / 8)), height=5)
                 text_frame.bind("<Configure>", _resize_text)
-                def on_text_change(event, key=key, text_widget=text_widget):
-                    if right_frame.node:
-                        right_frame.update_node_value(key, text_widget.get("1.0", tk.END).rstrip("\n"))
-                text_widget.bind("<KeyRelease>", on_text_change)
-            check_var.trace_add("write", lambda *args, key=key, check_var=check_var: right_frame.update_node_display(key, check_var.get()) if right_frame.node else None)
-            right_frame.value_widgets[key] = (text_widget, check_var)
-
+                text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_text_change(event, key, text_widget, nodeDetailView))
+            check_var.trace_add("write", lambda *args, key=key, check_var=check_var: nodeDetailView.update_node_display(key, check_var.get()) if nodeDetailView.node else None)
+            nodeDetailView.value_widgets[key] = (text_widget, check_var) 
+    def outputUI(self,nodeDetailFrame,nodeFrame):
+        for widget in nodeDetailFrame.bottom_section.winfo_children():
+            widget.destroy()
+        for key, value in self.outputs.items():
+            frame = tk.Frame(nodeDetailFrame.bottom_section, bg="lightpink")
+            frame.pack(fill=tk.X, padx=5, pady=2)
+            label = tk.Label(frame, text=f"{key}:", bg="lightpink")
+            label.pack(side=tk.LEFT, padx=(0,5))
+            text_widget = tk.Text(frame, height=2, wrap="word", bg="#ffe4ec")
+            text_widget.insert("1.0", str(value))
+            text_widget.config(state="disabled")
+            text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            nodeDetailFrame.output_labels[key] = text_widget
+    def on_text_change(self, event, key, text_widget, nodeDetailView):
+        value = text_widget.get("1.0", tk.END).rstrip("\n")
+        self.values[key]["value"] = value
+        nodeDetailView.update_node_value(key, value)
     def nodeUI(self, nodeBlock):
         nodeBlock.nodeName = tk.Label(nodeBlock.function_frame, text=f"Node : {self.nodeName}", bg="white")
         nodeBlock.nodeName.grid(row=1, column=1, sticky="w", padx=(0,2), pady=(2,0))
@@ -263,6 +254,7 @@ class NodeBlock:
         # Remove itself from parent.nodes as well
         if self.node_id in self.parent.nodes:
             del self.parent.nodes[self.node_id]
+        nodeFuction().updateDetailUI(self.parent.parent.nodeDetailView,self)
 
     def on_play(self, event):
         # Priority queue: (priority, node)
@@ -271,28 +263,25 @@ class NodeBlock:
             # Pop node with smallest priority
             play_functions.sort(key=lambda x: x[0])
             priority, node = play_functions.pop(0)
-            try:
-                outputValues = node.nodeClass.functions()
-                # Update child nodes and add them to play_functions
-                print(node.ChildNode)
-                print(outputValues)
-                for input_node, dic in node.ChildNode.items():
-                    for output, inputList in dic.items():
-                        if outputValues and not (output in outputValues):
-                            continue
-                        for input in inputList:
-                            input_node.nodeClass.values[input]["value"] = node.nodeClass.outputs[output]
-                        # Add input_node to play_functions if not already in play_functions
-                    if not any(n == input_node for _, n in play_functions):
-                        play_functions.append((input_node.priority, input_node))
-            except Exception as e:
-                print(f"Error executing functions for node {node.node_id}: {e}")
-        node.nodeClass.updateNodeDetailUi(node.parent.parent.right_frame)
+            # try:
+            outputValues = node.nodeClass.functions()
+            # Update child nodes and add them to play_functions
+            for input_node, dic in node.ChildNode.items():
+                for output, inputList in dic.items():
+                    if outputValues and not (output in outputValues):
+                        continue
+                    for input in inputList:
+                        input_node.nodeClass.values[input]["value"] = node.nodeClass.outputs[output]
+                    # Add input_node to play_functions if not already in play_functions
+                if not any(n == input_node for _, n in play_functions):
+                    play_functions.append((input_node.priority, input_node))
+            # except Exception as e:
+            #     print(f"Error executing functions for node {node.node_id}: {e}")
+        node.nodeClass.outputUI(node.parent.parent.nodeDetailView,self)
     def create_pins(self, canvas):
         # Prepare input and output keys
         input_keys = [k for k, v in self.nodeClass.values.items() if v.get("display", False)]
         output_keys = [k for k in self.nodeClass.outputs.keys()]
-
         # Remove 'input' from input_keys if present
         for label in input_keys:
             self.create_pin(canvas, 'input', label) 
@@ -376,8 +365,7 @@ class NodeBlock:
             pass
         else:
             self.parent.selected_node=self
-            self.nodeClass.outputUI(self.parent.parent.nodeDetailView,self)
-            self.nodeClass.inputUI(self.parent.parent.nodeDetailView,self)       
+            self.nodeClass.updateDetailUI(self.parent.parent.nodeDetailView,self)   
     def _on_frame_release(self, event):
         # 드래그가 아니면(즉 클릭)만 선택 처리
         if not self._drag_data.get("moved", False):

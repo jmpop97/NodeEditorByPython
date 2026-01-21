@@ -1,9 +1,6 @@
 from NodeView.Node import nodeFuction
 import tkinter as tk
-import requests
-import json
 from urllib.parse import urlparse, parse_qs
-
 class BurfNode(nodeFuction):
     def __init__(self) -> None:
         self.description = "burf suite"
@@ -27,10 +24,7 @@ class BurfNode(nodeFuction):
         # Parse the POST body text into a dict and store in values["parsed"]
         request = self.values["text"]["value"]
         # Split request into headers and body
-        try:
-            header_part, post_body = request.split("\n\n", 1)
-        except ValueError:
-            header_part, post_body = request, ""
+        header_part, post_body = request.split("\n\n", 1)
         # Parse request line and headers
         lines = header_part.split("\n")
         request_line = lines[0]
@@ -60,10 +54,13 @@ class BurfNode(nodeFuction):
         parsed_url = urlparse(path)
         param = parse_qs(parsed_url.query)
 
+        # Store post_body as data
+
         self.outputs = {
             "method": method,
             "url": url,
             "param": param,
             "headers": headers,
-            "data": "",
+            "data": post_body,
         }
+    
