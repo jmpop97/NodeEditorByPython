@@ -15,11 +15,11 @@ class NodeEditor(tk.Tk):
         # Add frames to the PanedWindow
         self.nodeListView = NodeListView(self.paned_window, self)  # Pass self as parent
         self.nodeView = NodeView(self.paned_window, self)  # Pass self as parent
-        self.right_frame = NodeDetailView(self.paned_window, self)  # Pass self as parent
+        self.nodeDetailView = NodeDetailView(self.paned_window, self)  # Pass self as parent
 
         self.paned_window.add(self.nodeListView, stretch="always")
         self.paned_window.add(self.nodeView, stretch="always")
-        self.paned_window.add(self.right_frame, stretch="always")
+        self.paned_window.add(self.nodeDetailView, stretch="always")
 
 
 

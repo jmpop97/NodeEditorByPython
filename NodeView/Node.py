@@ -28,11 +28,11 @@ class nodeFuction:
         for widget in right_frame.middle_section.winfo_children():
             widget.destroy()
         right_frame.value_widgets.clear()
-        self.inputUI(right_frame)
+        # self.inputUI(right_frame)
         for widget in right_frame.bottom_section.winfo_children():
             widget.destroy()
         right_frame.output_labels.clear()
-        self.outputUI(right_frame)
+        # self.outputUI(right_frame)
 
     def outputUI(self, right_frame):
         for key, value in self.outputs.items():
@@ -105,10 +105,10 @@ class nodeFuction:
             right_frame.value_widgets[key] = (text_widget, check_var)
 
     def nodeUI(self, nodeBlock):
-        nodeBlock.hello_label = tk.Label(nodeBlock.frame, text="안녕", bg="white")
-        nodeBlock.hello_label.grid(row=1, column=1, sticky="w", padx=(0,2), pady=(2,0))
-        nodeBlock.hello_entry = tk.Entry(nodeBlock.frame, width=12)
-        nodeBlock.hello_entry.grid(row=1, column=2, columnspan=2, sticky="w", padx=(0,2), pady=(2,0))
+        nodeBlock.nodeName = tk.Label(nodeBlock.function_frame, text=f"Node : {self.nodeName}", bg="white")
+        nodeBlock.nodeName.grid(row=1, column=1, sticky="w", padx=(0,2), pady=(2,0))
+        # nodeBlock.hello_entry = tk.Entry(nodeBlock.frame, width=12)
+        # nodeBlock.hello_entry.grid(row=1, column=2, columnspan=2, sticky="w", padx=(0,2), pady=(2,0))
         # frame_window가 Frame이고, 내부에 canvas가 있다면 사용
         # frame_window가 tk.Frame인 경우에는 별도 처리하지 않음
 class NodeBlock:
@@ -156,20 +156,11 @@ class NodeBlock:
         self.selected = False
         self.selection_border_id = None
         
+        self.nodeClass.nodeUI(self)
     def createButton(self, parent, text, bg, command, row, column):
         btn = tk.Button(parent, text=text, bg=bg, fg="white", width=2, height=1, command=command)
         btn.grid(row=row, column=column, sticky="e", padx=(0,2), pady=(2,0))
         return btn
-
-    def _on_frame_press(self, event):
-        widget = event.widget
-        abs_x = widget.winfo_rootx() + event.x
-        abs_y = widget.winfo_rooty() + event.y
-        self._drag_data["x"] = abs_x
-        self._drag_data["y"] = abs_y
-        self._drag_data["last_x"] = abs_x
-        self._drag_data["last_y"] = abs_y
-        self._drag_data["moved"] = False  # 클릭/드래그 구분 초기화
 
 
     def select(self, ctrl=False):
@@ -193,29 +184,8 @@ class NodeBlock:
             self.set_selected(True)
             self.parent.selected_nodes[self.node_id] = self
             self.frame.config(bg="blue")
-    def _on_frame_drag(self, event):
-        widget = event.widget
-        abs_x = widget.winfo_rootx() + event.x
-        abs_y = widget.winfo_rooty() + event.y
-        dx = abs_x - self._drag_data["last_x"]
-        dy = abs_y - self._drag_data["last_y"]
-        self._drag_data["last_x"] = abs_x
-        self._drag_data["last_y"] = abs_y
-        if dx != 0 or dy != 0:
-            self._drag_data["moved"] = True  # 실제로 움직였으면 moved 플래그 True
-        for node in self.parent.selected_nodes.values():
-            print(node)
-            node.move(dx, dy)
 
-    def _on_frame_release(self, event):
-        # 드래그가 아니면(즉 클릭)만 선택 처리
-        if not self._drag_data.get("moved", False):
-            print("click")
-            ctrl_pressed = (event.state & 0x0004) != 0  # Ctrl 키 체크
-            if ctrl_pressed:
-                self.select(ctrl=True)
-            else:
-                self.select(ctrl=False)
+
     def on_stop(self, event):
         # Toggle stop button color between gray and red
         self.stop_button_state = not self.stop_button_state
@@ -261,6 +231,21 @@ class NodeBlock:
         if self.selected and self.selection_border_id is not None:
             self.parent.canvas.move(self.selection_border_id, dx, dy)
 
+        # 연결된 connection 선도 같이 이동
+        for conn in self.parent.connections.values():
+            # 이 노드의 핀과 연결된 선만 업데이트
+            canvas = self.parent.canvas
+            start_coords = canvas.coords(conn.output_pin)
+            end_coords = canvas.coords(conn.input_pin)
+            if len(start_coords) == 4 and len(end_coords) == 4:
+                canvas.coords(
+                    conn.line_id,
+                    (start_coords[0] + start_coords[2]) // 2,
+                    (start_coords[1] + start_coords[3]) // 2,
+                    (end_coords[0] + end_coords[2]) // 2,
+                    (end_coords[1] + end_coords[3]) // 2
+                )
+
     def on_delete(self, event):
         # Delete input pins and texts
         for pin_types in self.pins.values():
@@ -272,14 +257,12 @@ class NodeBlock:
         self.parent.canvas.delete(self.frame_window)
         if self.selection_border_id is not None:
             self.parent.canvas.delete(self.selection_border_id)
-
-        # # Remove the node from the center frame's node dictionary
-        # for node_id, node in self.parent.canvas.master.nodes.items():
-        #     if node == self:
-        #         del self.parent.canvas.master.nodes[node_id]
-        #         break
-        # # Update RightFrame with a new BaseNode instance
-        # self.parent.canvas.master.parent.right_frame.update_node_details(nodeFuction(None))
+        # Remove itself from selected_nodes
+        if self.node_id in self.parent.selected_nodes:
+            del self.parent.selected_nodes[self.node_id]
+        # Remove itself from parent.nodes as well
+        if self.node_id in self.parent.nodes:
+            del self.parent.nodes[self.node_id]
 
     def on_play(self, event):
         # Priority queue: (priority, node)
@@ -380,3 +363,38 @@ class NodeBlock:
         widget.bind("<ButtonPress-1>", self._on_frame_press)
         widget.bind("<ButtonRelease-1>", self._on_frame_release)
         widget.bind("<B1-Motion>", self._on_frame_drag)
+    def _on_frame_press(self, event):
+        widget = event.widget
+        abs_x = widget.winfo_rootx() + event.x
+        abs_y = widget.winfo_rooty() + event.y
+        self._drag_data["x"] = abs_x
+        self._drag_data["y"] = abs_y
+        self._drag_data["last_x"] = abs_x
+        self._drag_data["last_y"] = abs_y
+        self._drag_data["moved"] = False  # 클릭/드래그 구분 초기화
+        if self.parent.selected_node==self:
+            pass
+        else:
+            self.parent.selected_node=self
+            self.nodeClass.outputUI(self.parent.parent.nodeDetailView)       
+            self.nodeClass.inputUI(self.parent.parent.nodeDetailView)       
+    def _on_frame_release(self, event):
+        # 드래그가 아니면(즉 클릭)만 선택 처리
+        if not self._drag_data.get("moved", False):
+            ctrl_pressed = (event.state & 0x0004) != 0  # Ctrl 키 체크
+            if ctrl_pressed:
+                self.select(ctrl=True)
+            else:
+                self.select(ctrl=False)
+    def _on_frame_drag(self, event):
+        widget = event.widget
+        abs_x = widget.winfo_rootx() + event.x
+        abs_y = widget.winfo_rooty() + event.y
+        dx = abs_x - self._drag_data["last_x"]
+        dy = abs_y - self._drag_data["last_y"]
+        self._drag_data["last_x"] = abs_x
+        self._drag_data["last_y"] = abs_y
+        if dx != 0 or dy != 0:
+            self._drag_data["moved"] = True  # 실제로 움직였으면 moved 플래그 True
+        for node in self.parent.selected_nodes.values():
+            node.move(dx, dy)
