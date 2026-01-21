@@ -130,24 +130,21 @@ class NodeBlock:
             }
         self.frame = tk.Frame(parent.canvas.master, bg="white", highlightthickness=0)
         self.frame_window = parent.canvas.create_window(x1, y1, anchor="nw", window=self.frame, width=width, height=height)
+        self.event(self.frame)
         
         self._drag_data = {"x": 0, "y": 0, "last_x": 0, "last_y": 0, "moved": False}
-        self.frame.bind("<ButtonPress-1>", self._on_frame_press)
-        self.frame.bind("<ButtonRelease-1>", self._on_frame_release)  # <- 새로 추가
-        self.frame.bind("<B1-Motion>", self._on_frame_drag)
         
         self.create_pins(parent.canvas)
 
         # Create a frame for buttons at the top (height 10)
         self.button_frame = tk.Frame(self.frame, bg="white", height=10)
         self.button_frame.pack(fill=tk.X, side=tk.TOP)
-        self.button_frame.bind("<ButtonPress-1>", self._on_frame_press)
-        self.button_frame.bind("<B1-Motion>", self._on_frame_drag)
+        self.event(self.button_frame)
+
         # Create a frame for function UI below the button frame
         self.function_frame = tk.Frame(self.frame, bg="white")
         self.function_frame.pack(fill=tk.BOTH, expand=True, side=tk.TOP)
-        self.function_frame.bind("<ButtonPress-1>", self._on_frame_press)
-        self.function_frame.bind("<B1-Motion>", self._on_frame_drag)
+        self.event(self.function_frame)
         # Move buttons to button_frame
         self.stop_button_state = False  # False: gray, True: red
         # Add a stretchable empty column to push buttons to the right
@@ -172,13 +169,8 @@ class NodeBlock:
         self._drag_data["y"] = abs_y
         self._drag_data["last_x"] = abs_x
         self._drag_data["last_y"] = abs_y
-        # Do not clear selected_nodes on click-drag
-        ctrl_pressed = (event.state & 0x0004) != 0  # Tkinter state mask for Ctrl
-        if ctrl_pressed:
-            self.select(ctrl=True)
-        else:
-            self.select(ctrl=False)
-        # Do not modify parent.selected_nodes here to preserve selection during drag
+        self._drag_data["moved"] = False  # 클릭/드래그 구분 초기화
+
 
     def select(self, ctrl=False):
         if ctrl:
@@ -210,12 +202,15 @@ class NodeBlock:
         self._drag_data["last_x"] = abs_x
         self._drag_data["last_y"] = abs_y
         if dx != 0 or dy != 0:
+            if not self._drag_data["moved"]:
+                print("drag")
             self._drag_data["moved"] = True  # 실제로 움직였으면 moved 플래그 True
         self.move(dx, dy)
 
     def _on_frame_release(self, event):
         # 드래그가 아니면(즉 클릭)만 선택 처리
         if not self._drag_data.get("moved", False):
+            print("click")
             ctrl_pressed = (event.state & 0x0004) != 0  # Ctrl 키 체크
             if ctrl_pressed:
                 self.select(ctrl=True)
@@ -390,3 +385,7 @@ class NodeBlock:
             else:
                 return i
         return i
+    def event(self, widget):
+        widget.bind("<ButtonPress-1>", self._on_frame_press)
+        widget.bind("<ButtonRelease-1>", self._on_frame_release)
+        widget.bind("<B1-Motion>", self._on_frame_drag)
