@@ -1,7 +1,7 @@
 import tkinter as tk
-from typing import Optional
 
-class nodeFuction:
+
+class NodeFuntion:
     def __init__(self) -> None:
         self.description = ""
         self.nodeName = ""
@@ -31,11 +31,14 @@ class nodeFuction:
         for key, value in self.values.items():
             frame = tk.Frame(nodeDetailView.middle_section, bg="lightyellow")
             frame.pack(fill=tk.X, padx=5, pady=2)
+
             check_var = tk.BooleanVar(value=value.get("display", False))
             check_button = tk.Checkbutton(frame, variable=check_var, bg="lightyellow", command=lambda k=key, l=key: node_frame.on_check(k, l) if self.nodeUI is not None else None)
             check_button.pack(side=tk.LEFT)
+
             label = tk.Label(frame, text=key, bg="lightyellow")
             label.pack(side=tk.LEFT, padx=5)
+
             text_frame = tk.Frame(frame, bg="lightyellow")
             text_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
             v_scrollbar = None
@@ -78,32 +81,89 @@ class nodeFuction:
                 text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_text_change(event, key, text_widget, nodeDetailView))
             check_var.trace_add("write", lambda *args, key=key, check_var=check_var: nodeDetailView.update_node_display(key, check_var.get()) if nodeDetailView.node else None)
             nodeDetailView.value_widgets[key] = (text_widget, check_var) 
-    def outputUI(self,nodeDetailFrame,nodeFrame):
-        for widget in nodeDetailFrame.bottom_section.winfo_children():
+    def outputUI(self, nodeDetailView, nodeFrame):
+        for widget in nodeDetailView.bottom_section.winfo_children():
             widget.destroy()
         for key, value in self.outputs.items():
-            frame = tk.Frame(nodeDetailFrame.bottom_section, bg="lightpink")
+            frame = tk.Frame(nodeDetailView.bottom_section, bg="lightpink")
             frame.pack(fill=tk.X, padx=5, pady=2)
-            label = tk.Label(frame, text=f"{key}:", bg="lightpink")
-            label.pack(side=tk.LEFT, padx=(0,5))
-            text_widget = tk.Text(frame, height=2, wrap="word", bg="#ffe4ec")
-            text_widget.insert("1.0", str(value))
-            text_widget.config(state="disabled")
-            text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
-            nodeDetailFrame.output_labels[key] = text_widget
+
+            label = tk.Label(frame, text=key, bg="lightpink")
+            label.pack(side=tk.LEFT, padx=5)
+
+            text_frame = tk.Frame(frame, bg="lightpink")
+            text_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+            v_scrollbar = None
+            h_scrollbar = None
+            
+                            # 기본: Text 위젯, 여러 줄
+            text_widget = tk.Text(text_frame, height=5, wrap="none")
+            text_widget.insert("1.0", value)
+            # Vertical scrollbar (right)
+            v_scrollbar = tk.Scrollbar(text_frame, orient="vertical", command=text_widget.yview)
+            v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            # Horizontal scrollbar (bottom, spans under the text widget)
+            h_scrollbar = tk.Scrollbar(text_frame, orient="horizontal", command=text_widget.xview)
+            h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+            text_widget.config(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+            text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            def _resize_text(event, text_widget=text_widget):
+                text_widget.config(width=max(10, int(text_widget.winfo_width() / 8)), height=5)
+            text_frame.bind("<Configure>", _resize_text)
+            text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_result_change(event, key, text_widget, nodeDetailView))
+            nodeDetailView.output_widgets[key] = text_widget
+        # for widget in nodeDetailView.bottom_section.winfo_children():
+        #     widget.destroy()
+        # # For each output, create a label and an editable Text widget with scrollbars
+        # for key, value in self.outputs.items():
+        #     frame = tk.Frame(nodeDetailView.bottom_section, bg="lightyellow")
+        #     frame.pack(fill=tk.X, padx=5, pady=2)
+
+        #     label = tk.Label(frame, text=key, bg="lightyellow")
+        #     label.pack(side=tk.LEFT, padx=5)
+
+        #     text_frame = tk.Frame(frame, bg="lightyellow")
+        #     text_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        #     v_scrollbar = None
+        #     h_scrollbar = None
+        #     text_widget = tk.Text(text_frame, height=5, wrap="none")
+        #     text_widget.insert("1.0", value)
+        #     # Vertical scrollbar (right)
+        #     v_scrollbar = tk.Scrollbar(text_frame, orient="vertical", command=text_widget.yview)
+        #     v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        #     # Horizontal scrollbar (bottom, spans under the text widget)
+        #     h_scrollbar = tk.Scrollbar(text_frame, orient="horizontal", command=text_widget.xview)
+        #     h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+        #     text_widget.config(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        #     text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        #     def _resize_text(event, text_widget=text_widget):
+        #         text_widget.config(width=max(10, int(text_widget.winfo_width() / 8)), height=5)
+        #     text_frame.bind("<Configure>", _resize_text)
+        #     # Make output text_widget editable by default
+        #     text_widget.config(state="normal")
+        #     text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_result_change(event, key, text_widget, nodeDetailView))
+        #     # 외부에서 접근 가능하도록 output_labels에 저장
+        #     nodeDetailView.output_labels[key] = text_widget
+
     def on_text_change(self, event, key, text_widget, nodeDetailView):
         value = text_widget.get("1.0", tk.END).rstrip("\n")
         self.values[key]["value"] = value
         nodeDetailView.update_node_value(key, value)
+    def on_result_change(self, event, key, text_widget, nodeDetailView):
+        value = text_widget.get("1.0", tk.END).rstrip("\n")
+        self.outputs[key]= value
+        nodeDetailView.update_node_output(key, value)
     def nodeUI(self, nodeBlock):
-        nodeBlock.nodeName = tk.Label(nodeBlock.function_frame, text=f"Node : {self.nodeName}", bg="white")
-        nodeBlock.nodeName.grid(row=1, column=1, sticky="w", padx=(0,2), pady=(2,0))
+        pass
+        # nodeBlock.nodeName = tk.Label(nodeBlock.function_frame, text=f"Node : {self.nodeName}", bg="white")
+        # nodeBlock.nodeName.grid(row=1, column=1, sticky="w", padx=(0,2), pady=(2,0))
         # nodeBlock.hello_entry = tk.Entry(nodeBlock.frame, width=12)
         # nodeBlock.hello_entry.grid(row=1, column=2, columnspan=2, sticky="w", padx=(0,2), pady=(2,0))
         # frame_window가 Frame이고, 내부에 canvas가 있다면 사용
         # frame_window가 tk.Frame인 경우에는 별도 처리하지 않음
 class NodeBlock:
-    def __init__(self, parent, Node_class, x, y, width=150, height=100):
+    def __init__(self, parent, Node_class, x, y, width=300, height=100):
         self.ChildNode = {}
         self.rectPoint = (x,y,width,height)
         self.parent  = parent
@@ -143,6 +203,9 @@ class NodeBlock:
         self.play_button = self.createButton(self.button_frame, "▶", "green", lambda: self.on_play(None), row=0, column=1)
         self.stop_button = self.createButton(self.button_frame, "■", "gray", lambda: self.on_stop(None), row=0, column=2)
         self.delete_button = self.createButton(self.button_frame, "X", "gray", lambda: self.on_delete(None), row=0, column=3)
+        self.nodeName_label = tk.Label(self.button_frame, text=self.nodeClass.nodeName, bg="white")
+        self.nodeName_label.grid(row=0, column=0, sticky="w", padx=(2,2), pady=(2,0))
+
         # self.nodeClass.nodeUI(self)
         self.selected = False
         self.selection_border_id = None
@@ -254,7 +317,7 @@ class NodeBlock:
         # Remove itself from parent.nodes as well
         if self.node_id in self.parent.nodes:
             del self.parent.nodes[self.node_id]
-        nodeFuction().updateDetailUI(self.parent.parent.nodeDetailView,self)
+        NodeFuntion().updateDetailUI(self.parent.parent.nodeDetailView,self)
 
     def on_play(self, event):
         # Priority queue: (priority, node)

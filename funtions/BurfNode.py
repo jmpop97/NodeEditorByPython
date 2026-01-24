@@ -1,7 +1,7 @@
-from NodeView.Node import nodeFuction
+from NodeView.Node import NodeFuntion
 import tkinter as tk
 from urllib.parse import urlparse, parse_qs
-class BurfNode(nodeFuction):
+class BurfNode(NodeFuntion):
     def __init__(self) -> None:
         self.description = "burf suite"
         self.nodeName = "burf suite"
@@ -23,8 +23,12 @@ class BurfNode(nodeFuction):
     def functions(self):
         # Parse the POST body text into a dict and store in values["parsed"]
         request = self.values["text"]["value"]
-        # Split request into headers and body
-        header_part, post_body = request.split("\n\n", 1)
+        # Split request into headers and body, handle missing post_body
+        if "\n\n" in request:
+            header_part, post_body = request.split("\n\n", 1)
+        else:
+            header_part = request
+            post_body = ""
         # Parse request line and headers
         lines = header_part.split("\n")
         request_line = lines[0]

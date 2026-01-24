@@ -1,5 +1,6 @@
 import tkinter as tk
-from NodeView.Node import nodeFuction
+from NodeView.Node import NodeFuntion
+
 
 class NodeDetailView(tk.Frame):
     def __init__(self, parent, app):
@@ -8,9 +9,23 @@ class NodeDetailView(tk.Frame):
         self.parent = app
         self.pack_propagate(False)
 
-        self.top_section = tk.Frame(self, bg="lightgreen", height=100)
-        self.middle_section = tk.Frame(self, bg="lightyellow", height=100)
-        self.bottom_section = tk.Frame(self, bg="lightpink", height=100)
+        # --- 스크롤 가능한 영역 생성 ---
+        self.canvas = tk.Canvas(self, borderwidth=0, background="lightblue")
+        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        self.inner_frame = tk.Frame(self.canvas, bg="lightblue")
+        self.inner_frame_id = self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
+
+        self.inner_frame.bind("<Configure>", self._on_frame_configure)
+        self.canvas.bind('<Configure>', self._on_canvas_configure)
+
+        # --- 기존 내용은 inner_frame에 배치 ---
+        self.top_section = tk.Frame(self.inner_frame, bg="lightgreen", height=100)
+        self.middle_section = tk.Frame(self.inner_frame, bg="lightyellow", height=100)
+        self.bottom_section = tk.Frame(self.inner_frame, bg="lightpink", height=100)
 
         self.top_section.pack(fill=tk.X, padx=5, pady=5)
         self.middle_section.pack(fill=tk.X, padx=5, pady=5)
@@ -35,9 +50,18 @@ class NodeDetailView(tk.Frame):
         self.description_textbox.bind("<KeyRelease>", lambda event: self.update_description(self.node, self.description_textbox.get()) if self.node else None)
 
         self.value_widgets = {}
+        self.output_widgets = {}
         self.output_labels = {}
 
-    def update_description(self, node: nodeFuction, new_description: str):
+    def _on_frame_configure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _on_canvas_configure(self, event):
+        canvas_width = event.width
+        self.canvas.itemconfig(self.inner_frame_id, width=canvas_width)
+
+    def update_description(self, node: NodeFuntion, new_description: str):
+
         if node and new_description:
             node.description = new_description
             for key, label in self.output_labels.items():
@@ -52,14 +76,9 @@ class NodeDetailView(tk.Frame):
                 if label_key == key:
                     label.config(text=f"{key}: {new_value}")
                     break
-
-    def update_node_display(self, key: str, new_display: bool):
+    def update_node_output(self, key: str, new_value: str):
         if self.node and key in self.node.values:
-            self.node.values[key]["display"] = new_display
-            if key in self.value_widgets:
-                entry, check_var = self.value_widgets[key]
-                check_var.set(new_display)
-
-    def print_and_update_node_name(self, node: nodeFuction, new_name: str):
+            self.node.outputs[key] = new_value
+    def print_and_update_node_name(self, node: NodeFuntion, new_name: str):
         print(f"Node name changed to: {new_name}")
 

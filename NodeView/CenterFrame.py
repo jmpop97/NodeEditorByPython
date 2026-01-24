@@ -52,7 +52,7 @@ class NodeTopView(tk.Frame):
         for i, node in enumerate(sorted_nodes.values()):
             node_name = i
             node_id_dic[node.node_id] = node_name
-            coords = node.get_coords()
+            coords = node.rectPoint
 
             node_data = {
                 'node_id': node_name,
@@ -154,8 +154,8 @@ class NodeView(tk.Frame):
             className = node_info.get('className')
             node_id = node_info.get('node_id')
             node_class = self.parent.nodeListView.get_node_by_classname(className)
-            coords = node_info.get('coords', (50, 50, 150, 100))
-            node = self.add_node(node_class)
+            rectPoint = node_info.get('coords', (50, 50, 150, 100))
+            node = self.add_node(node_class,*rectPoint)
             # Set nodeName, description, values, outputs if present
             if hasattr(node, 'nodeClass'):
                 if 'nodeName' in node_info:
