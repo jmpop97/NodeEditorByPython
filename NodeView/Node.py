@@ -228,6 +228,7 @@ class NodeBlock:
                 self.set_selected(True)
                 self.parent.selected_nodes[self.node_id] = self
                 self.frame.config(bg="blue")
+
         else:
             # Deselect all nodes except this one
             for n in self.parent.nodes.values():
@@ -262,6 +263,8 @@ class NodeBlock:
             self.parent.canvas.tag_lower(self.selection_border_id, self.frame_window)
             # Also set frame color to blue
             self.frame.config(bg="blue")
+            if self==self.parent.selected_node:
+                self.nodeClass.updateDetailUI(self.parent.parent.nodeDetailView,self)
         else:
             if self.selection_border_id is not None:
                 self.parent.canvas.delete(self.selection_border_id)
@@ -428,7 +431,6 @@ class NodeBlock:
             pass
         else:
             self.parent.selected_node=self
-            self.nodeClass.updateDetailUI(self.parent.parent.nodeDetailView,self)   
     def _on_frame_release(self, event):
         # 드래그가 아니면(즉 클릭)만 선택 처리
         if not self._drag_data.get("moved", False):
@@ -447,5 +449,8 @@ class NodeBlock:
         self._drag_data["last_y"] = abs_y
         if dx != 0 or dy != 0:
             self._drag_data["moved"] = True  # 실제로 움직였으면 moved 플래그 True
+        # If dragging and not self, set selected_node to self
+        if self.parent.selected_node != self:
+            self.parent.selected_node = self
         for node in self.parent.selected_nodes.values():
             node.move(dx, dy)

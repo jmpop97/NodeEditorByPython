@@ -5,6 +5,7 @@ from typing import Optional
 import json
 import os
 from tkinter import messagebox
+from NodeView.Node import NodeFuntion
 class Connection:
     def __init__(self, output_pin, input_pin, output_node, input_node,output_label,input_label, line_id):
         self.input_node = input_node
@@ -138,6 +139,21 @@ class NodeView(tk.Frame):
         self.canvas.bind("<ButtonPress-1>", self.on_canvas_press)
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
+            # Bind double-click event to canvas
+        self.canvas.bind("<Double-Button-1>", self.on_canvas_double_click)
+    def on_canvas_double_click(self, event):
+        # Print when double-clicking on empty canvas
+        print("Canvas double-clicked at:", event.x, event.y)
+        # Deselect all nodes
+        for node in self.nodes.values():
+            node.set_selected(False)
+            if hasattr(node, 'frame'):
+                node.frame.config(bg="white")
+        self.selected_nodes.clear()
+        # Reset nodeDetailView to NodeFuntion()
+        self.parent.nodeDetailView.node = NodeFuntion()
+        # Optionally, update the UI to reflect the reset
+        self.parent.nodeDetailView.node.updateDetailUI(self.parent.nodeDetailView, None)
 
     def add_node(self, node_class, x1=50, y1=50, x2=150, y2=100):
         # Create a new Node instance with multiple input and output pins
