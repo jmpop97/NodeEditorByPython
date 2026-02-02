@@ -3,10 +3,15 @@ import importlib
 import tkinter as tk
 from tkinter import ttk
 import json
+from typing import Optional
+
 class NodeListView(tk.Frame):
     def __init__(self, window, parent):  # Pass app as parent
+        from NodeView.CenterFrame import NodeView
         super().__init__(window, width=100, bg="lightgray")
         self.parent = parent  # Store the reference to the app
+        self.nodeDetailView = None
+        self.nodeView: Optional[NodeView] = None  # nodeView is NodeView class
         self.pack_propagate(False)
 
         # Add a Treeview widget to the left frame for the node list
@@ -123,15 +128,16 @@ class NodeListView(tk.Frame):
         self.context_menu = tk.Menu(self, tearoff=0)
         self.context_menu.add_command(label="삭제", command=self.delete_selected_item)
     def on_item_double_click(self, event):
-    # Get selected item
+        # Get selected item
         selected_item = self.tree.selection()
-        nodeView=self.parent.nodeView
-        if selected_item:
+        nodeView = self.nodeView
+        if selected_item and nodeView is not None:
             node_name = self.tree.item(selected_item[0], "values")[0]
             node_type = self.tree.item(selected_item[0], "values")[1]
             # Find the node_class/content from sample_data
-            node_obj=self.get_node_by_name(node_name)
+            node_obj = self.get_node_by_name(node_name)
             if node_type == "Node":
-                nodeView.add_node(node_obj)
+                node=nodeView.add_node(node_obj)
+                node.nodeFunction.nodeUI()
             elif node_type == "Multy Nodes":
                 nodeView.add_nodes(node_obj)

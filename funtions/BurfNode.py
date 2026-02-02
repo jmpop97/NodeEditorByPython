@@ -1,7 +1,7 @@
-from NodeView.Node import NodeFuntion
+from NodeView.Node import NodeFunction
 import tkinter as tk
 from urllib.parse import urlparse, parse_qs
-class BurfNode(NodeFuntion):
+class BurfNode(NodeFunction):
     def __init__(self) -> None:
         self.description = "burf suite"
         self.nodeName = "burf suite"

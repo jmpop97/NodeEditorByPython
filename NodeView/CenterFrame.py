@@ -1,11 +1,12 @@
 import tkinter as tk
 from tkinter import Canvas
-from NodeView.Node import NodeBlock
+
 from typing import Optional
 import json
 import os
 from tkinter import messagebox
-from NodeView.Node import NodeFuntion
+from NodeListView.NodeListView import NodeListView
+from NodeDetailView.NodeDetailView import NodeDetailView
 class Connection:
     def __init__(self, output_pin, input_pin, output_node, input_node,output_label,input_label, line_id):
         self.input_node = input_node
@@ -16,9 +17,9 @@ class Connection:
         self.output_pin = output_pin
         self.line_id = line_id
 class NodeTopView(tk.Frame):
-    def __init__(self, window, parent):
+    def __init__(self, parent):
+        self.parent : NodeView = parent
         super().__init__(parent, width=100, bg="white")
-        self.parent = parent
         top_frame = tk.Frame(self, bg="white")
         top_frame.pack(fill=tk.X, padx=5, pady=5)
 
@@ -38,8 +39,10 @@ class NodeTopView(tk.Frame):
         nodes = {}
         if not self.parent.selected_nodes:
             nodes = self.parent.nodes
+            print("selected_nodes",self.parent.nodes)
         else:
             nodes = self.parent.selected_nodes
+            print("selected_nodes",self.parent.selected_nodes)
         # Sort nodes by node.priority (ascending)
         sorted_nodes = dict(sorted(nodes.items(), key=lambda item: getattr(item[1], 'priority', 0)))
         name = self.name_entry.get()
@@ -57,11 +60,11 @@ class NodeTopView(tk.Frame):
 
             node_data = {
                 'node_id': node_name,
-                'className': type(node.nodeClass).__name__,
-                'nodeName': getattr(node.nodeClass, 'nodeName', type(node.nodeClass).__name__),
-                'description': getattr(node.nodeClass, 'description', ''),
-                'values': getattr(node.nodeClass, 'values', ''),
-                'outputs': getattr(node.nodeClass, 'outputs', ''),
+                'className': type(node.nodeFunction).__name__,
+                'nodeName': getattr(node.nodeFunction, 'nodeName', type(node.nodeFunction).__name__),
+                'description': getattr(node.nodeFunction, 'description', ''),
+                'values': getattr(node.nodeFunction, 'values', ''),
+                'outputs': getattr(node.nodeFunction, 'outputs', ''),
                 'coords': coords,
             }
             nodes_data.append(node_data)
@@ -103,12 +106,18 @@ class NodeTopView(tk.Frame):
 
 class NodeView(tk.Frame):
     def __init__(self, window, parent):  # Pass app as parent
+        from NodeView.Node import NodeFunction
+        from NodeView.Node import NodeBlock
+        self.class_NodeFunction=NodeFunction
+        self.class_NodeBlock=NodeBlock
         super().__init__(window, width=200, bg="white")
         self.parent = parent  # Store the reference to the app
+        self.nodeListView : Optional[NodeListView] =None
+        self.nodeDetailView :Optional[NodeDetailView] =None
         self.pack_propagate(False)
 
         # --- NodeTopView (NodeView 내부 위쪽, name/desc/save UI) ---
-        self.node_top_view = NodeTopView(window, self)
+        self.node_top_view = NodeTopView(self)
         self.node_top_view.pack(fill=tk.X, padx=5, pady=5)
 
         # Add a canvas to draw nodes
@@ -118,6 +127,7 @@ class NodeView(tk.Frame):
         # Store references to nodes
         self.nodes = {}
         self.node_num=0
+
         self.selected_node: Optional[NodeBlock] = None
         self.selected_nodes: dict[int, NodeBlock] = {}  # For multi-selection, key=node_id
         self.select_rect_id = None  # Rectangle ID for selection box
@@ -139,8 +149,10 @@ class NodeView(tk.Frame):
         self.canvas.bind("<ButtonPress-1>", self.on_canvas_press)
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
-            # Bind double-click event to canvas
+        # Bind double-click event to canvas
         self.canvas.bind("<Double-Button-1>", self.on_canvas_double_click)
+        # Bind right-click to delete connection
+        self.canvas.bind("<Button-3>", self.on_canvas_right_click)
     def on_canvas_double_click(self, event):
         # Print when double-clicking on empty canvas
         print("Canvas double-clicked at:", event.x, event.y)
@@ -150,14 +162,18 @@ class NodeView(tk.Frame):
             if hasattr(node, 'frame'):
                 node.frame.config(bg="white")
         self.selected_nodes.clear()
-        # Reset nodeDetailView to NodeFuntion()
-        self.parent.nodeDetailView.node = NodeFuntion()
+
+        nodeFuntion = self.class_NodeFunction()
+        nodeFuntion.nodeDetailView=self.nodeDetailView
         # Optionally, update the UI to reflect the reset
-        self.parent.nodeDetailView.node.updateDetailUI(self.parent.nodeDetailView, None)
+        nodeFuntion.updateDetailUI()
+        if self.nodeDetailView is not None:
+            self.nodeDetailView.node = nodeFuntion
 
     def add_node(self, node_class, x1=50, y1=50, x2=150, y2=100):
+
         # Create a new Node instance with multiple input and output pins
-        node = NodeBlock(self, node_class, x1, y1, x2, y2)
+        node = self.class_NodeBlock(self, node_class, x1, y1, x2, y2)
         self.nodes[node.node_id] = node
         # Bind click for selection (single and ctrl+multi)
         return node
@@ -169,20 +185,18 @@ class NodeView(tk.Frame):
         for node_info in nodes_data:
             className = node_info.get('className')
             node_id = node_info.get('node_id')
-            node_class = self.parent.nodeListView.get_node_by_classname(className)
+            node_class = None
+            if self.nodeListView is not None:
+                node_class = self.nodeListView.get_node_by_classname(className)
             rectPoint = node_info.get('coords', (50, 50, 150, 100))
-            node = self.add_node(node_class,*rectPoint)
+            node = self.add_node(node_class, *rectPoint)
             # Set nodeName, description, values, outputs if present
-            if hasattr(node, 'nodeClass'):
-                if 'nodeName' in node_info:
-                    setattr(node.nodeClass, 'nodeName', node_info['nodeName'])
-                if 'description' in node_info:
-                    setattr(node.nodeClass, 'description', node_info['description'])
-                if 'values' in node_info:
-                    setattr(node.nodeClass, 'values', node_info['values'])
-                if 'outputs' in node_info:
-                    setattr(node.nodeClass, 'outputs', node_info['outputs'])
+            node.nodeFunction.nodeName = node_info['nodeName']
+            node.nodeFunction.description = node_info['description']
+            node.nodeFunction.values = node_info['values']
+            node.nodeFunction.outputs = node_info['outputs']
             nodeIdDic[node_id] = node.node_id
+            node.nodeFunction.nodeUI()
         # Restore connections (only between existing nodes)
         for conn_info in connections_data:
             output_node_id = nodeIdDic.get(conn_info.get('output_node_id'))
@@ -262,10 +276,13 @@ class NodeView(tk.Frame):
                 to_remove.append(key)
         for key in to_remove:
             del self.connections[key]
+    def remove_connection_by_line_id(self, line_id):
+        # Remove connection by its line_id
+        for key, connection in list(self.connections.items()):
+            if connection.line_id == line_id:
+                self.remove_connection(connection.input_pin)  # This will remove the line and update ChildNode
+                break
     def on_pin_click(self, pin, pin_type: str, label,node):
-        # pin_type: 'input' or 'output'
-
-
         if self.selected_pin[pin_type] is None:
             self.selected_pin[pin_type] = (pin, node,label)
             self.canvas.itemconfig(pin, fill="red")
@@ -338,3 +355,12 @@ class NodeView(tk.Frame):
             # If none selected, clear selected_nodes
             if not self.selected_nodes:
                 self.selected_nodes = {}
+
+    def on_canvas_right_click(self, event):
+        # Detect if a connection line was right-clicked and remove it
+        clicked_items = self.canvas.find_overlapping(event.x, event.y, event.x, event.y)
+        for item in clicked_items:
+            for key, connection in list(self.connections.items()):
+                if connection.line_id == item:
+                    self.remove_connection_by_line_id(connection.line_id)
+                    return  # Only remove one connection per click

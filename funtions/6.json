@@ -1,0 +1,29 @@
+{
+  "name": "test",
+  "desc": "test",
+  "nodes": [
+    {
+      "node_id": 0,
+      "className": "TextNode",
+      "nodeName": "test",
+      "description": "text",
+      "values": {
+        "text": {
+          "value": "test",
+          "display": false,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "text": "test"
+      },
+      "coords": [
+        157,
+        179,
+        150,
+        100
+      ]
+    }
+  ],
+  "connections": []
+}

@@ -1,12 +1,14 @@
 import tkinter as tk
-from NodeView.Node import NodeFuntion
-
-
+from typing import Optional
 class NodeDetailView(tk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent, width=200, bg="lightblue")
-        self.node = None
+        from NodeView.Node import NodeFunction
+        self.class_NodeFunction=NodeFunction
+        self.node: Optional[NodeDetailView] = None
         self.parent = app
+        self.nodeView=None
+        self.nodeListView=None
         self.pack_propagate(False)
 
         # --- 스크롤 가능한 영역 생성 ---
@@ -39,6 +41,7 @@ class NodeDetailView(tk.Frame):
         self.node_name_label.pack(fill=tk.X, padx=5, pady=2)
         self.node_name_textbox = tk.Entry(self.top_section)
         self.node_name_textbox.pack(fill=tk.X, padx=5, pady=2)
+        self.node_name_textbox.bind("<KeyRelease>", lambda event: self.update_node_name(self.node_name_textbox.get()))
 
         self.description_label = tk.Label(self.top_section, text="Description", bg="lightgreen")
         self.description_label.pack(fill=tk.X, padx=5, pady=2)
@@ -46,7 +49,6 @@ class NodeDetailView(tk.Frame):
         self.description_textbox.pack(fill=tk.X, padx=5, pady=2)
 
         # Print changed node name value when it is updated
-        self.node_name_textbox.bind("<KeyRelease>", lambda event: self.print_and_update_node_name(self.node, self.node_name_textbox.get()) if self.node else None)
         self.description_textbox.bind("<KeyRelease>", lambda event: self.update_description(self.node, self.description_textbox.get()) if self.node else None)
 
         self.value_widgets = {}
@@ -60,8 +62,7 @@ class NodeDetailView(tk.Frame):
         canvas_width = event.width
         self.canvas.itemconfig(self.inner_frame_id, width=canvas_width)
 
-    def update_description(self, node: NodeFuntion, new_description: str):
-
+    def update_description(self, node, new_description: str):
         if node and new_description:
             node.description = new_description
             for key, label in self.output_labels.items():
@@ -70,15 +71,28 @@ class NodeDetailView(tk.Frame):
                     break
 
     def update_node_value(self, key: str, new_value: str):
-        if self.node and key in self.node.values:
-            self.node.values[key]["value"] = new_value
+        nodeFunction=self.class_NodeFunction
+        if nodeFunction and key in nodeFunction.values:
+            nodeFunction.values[key]["value"] = new_value
             for label_key, label in self.output_labels.items():
                 if label_key == key:
                     label.config(text=f"{key}: {new_value}")
                     break
+    def update_list_value(self, key: str, new_value: str, index: int):
+
+        value_list = self.node.nodeFunction.values[key]["value"]
+        value_list[index] = new_value
+        self.node.nodeFunction.values[key]["value"] = value_list
+        for label_key, label in self.output_labels.items():
+            if label_key == key:
+                # index값으로 해당 항목만 표시
+                label.config(text=f"{key}[{index}]: {value_list[index]}")
+                break
     def update_node_output(self, key: str, new_value: str):
         if self.node and key in self.node.values:
             self.node.outputs[key] = new_value
-    def print_and_update_node_name(self, node: NodeFuntion, new_name: str):
-        print(f"Node name changed to: {new_name}")
+    def update_node_name(self, new_name: str):
+        node= self.node
+        node.nodeFunction.nodeName=new_name    
+        node.button_frame_widgets.nodeName_label.config(text=new_name)
 
