@@ -13,11 +13,12 @@ class Replace(NodeFunction):
         self.outputs = {
             "result": "",
         }
-
+        self.widget={}
     def functions(self):
         text = self.values["text"]["value"]
         before = self.values["before"]["value"]
         after = self.values["after"]["value"]
+        print(after,before)
         result = text.replace(before, after)
         self.outputs = {
             "result": result,
@@ -25,24 +26,35 @@ class Replace(NodeFunction):
 
     def nodeUI(self):
         nodeBlock = self.block
-        # Entry for 'before'
+        self.widget = {}  # Store widgets and labels by key
         before_label = tk.Label(nodeBlock.function_frame, text="Before:")
         before_label.grid(row=4, column=1, sticky="w", padx=(0,2), pady=(2,0))
-        nodeBlock.before_entry = tk.Entry(nodeBlock.function_frame, width=20)
-        nodeBlock.before_entry.grid(row=4, column=2, columnspan=2, sticky="w", padx=(0,2), pady=(2,0))
-        nodeBlock.before_entry.insert(0, self.values["before"]["value"])
-        def on_before_change(event=None):
-            self.values["before"]["value"] = nodeBlock.before_entry.get()
-            self.inputUI()
-        nodeBlock.before_entry.bind("<KeyRelease>", on_before_change)
+        before_text = tk.Text(nodeBlock.function_frame, width=20, height=1)
+        before_text.grid(row=4, column=2, columnspan=2, sticky="w", padx=(0,2), pady=(2,0))
+        before_text.insert("1.0", self.values["before"]["value"])
+        before_text.bind("<KeyRelease>", lambda event, key="before", text_widget=before_text: self.on_text_change(event, key, text_widget, self.nodeDetailView), add="+")
+        self.widget["before"] = (before_text, before_label)
 
-        # Entry for 'after'
+        # Textbox for 'after' (same as 'before')
         after_label = tk.Label(nodeBlock.function_frame, text="After:")
         after_label.grid(row=5, column=1, sticky="w", padx=(0,2), pady=(2,0))
-        nodeBlock.after_entry = tk.Entry(nodeBlock.function_frame, width=20)
-        nodeBlock.after_entry.grid(row=5, column=2, columnspan=2, sticky="w", padx=(0,2), pady=(2,0))
-        nodeBlock.after_entry.insert(0, self.values["after"]["value"])
-        def on_after_change(event=None):
-            self.values["after"]["value"] = nodeBlock.after_entry.get()
-            self.inputUI()
-        nodeBlock.after_entry.bind("<KeyRelease>", on_after_change)
+        after_text = tk.Text(nodeBlock.function_frame, width=20, height=1)
+        after_text.grid(row=5, column=2, columnspan=2, sticky="w", padx=(0,2), pady=(2,0))
+        after_text.insert("1.0", self.values["after"]["value"])
+        after_text.bind("<KeyRelease>", lambda event, key="after", text_widget=after_text: self.on_text_change(event, key, text_widget, self.nodeDetailView), add="+")
+        self.widget["after"] = (after_text, after_label)
+
+    def on_text_change(self, event, key, text_widget, nodeDetailView):
+        super().on_text_change(event, key, text_widget, nodeDetailView)
+        change_text_widget=None
+        (node_widget,_)=self.widget[key]
+        if event.widget==node_widget:
+            if not self.nodeDetailView.node ==self.block:
+                return
+            (change_text_widget, check_var) = self.nodeDetailView.value_widgets[key]
+        else:
+            change_text_widget=node_widget
+        # Save current cursor position
+        # Update the text_widget content to match self.values[key]["value"]
+        change_text_widget.delete("1.0", tk.END)
+        change_text_widget.insert(tk.END, self.values[key]["value"])

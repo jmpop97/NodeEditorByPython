@@ -131,7 +131,9 @@ class NodeView(tk.Frame):
         self.selected_node: Optional[NodeBlock] = None
         self.selected_nodes: dict[int, NodeBlock] = {}  # For multi-selection, key=node_id
         self.select_rect_id = None  # Rectangle ID for selection box
-        self.select_start = None  # (x, y) start position for selection
+        self.                                                                                                           select_start = None  # (x, y) start position for selection
+        self.is_double_click_drag = False  # Track if dragging after double-click
+        self.last_drag_pos = None  # Last position during drag
         self.selected_pin: dict[str, Optional[tuple[int, NodeBlock,str]]] = {
             "input": None,
             "output": None
@@ -146,30 +148,18 @@ class NodeView(tk.Frame):
         # Bind right-click to remove connection
 
         # Bind mouse events for selection rectangle
-        self.canvas.bind("<ButtonPress-1>", self.on_canvas_press)
-        self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
-        self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
+        self.canvas.bind("<ButtonPress-1>", self.on_canvas_press, add="+")
+        self.canvas.bind("<B1-Motion>", self.on_canvas_drag, add="+")
+        self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release, add="+")
         # Bind double-click event to canvas
-        self.canvas.bind("<Double-Button-1>", self.on_canvas_double_click)
+        self.canvas.bind("<Double-Button-1>", self.on_canvas_double_click, add="+")
         # Bind right-click to delete connection
-        self.canvas.bind("<Button-3>", self.on_canvas_right_click)
+        self.canvas.bind("<Button-3>", self.on_canvas_right_click, add="+")
     def on_canvas_double_click(self, event):
-        # Print when double-clicking on empty canvas
-        print("Canvas double-clicked at:", event.x, event.y)
-        # Deselect all nodes
-        for node in self.nodes.values():
-            node.set_selected(False)
-            if hasattr(node, 'frame'):
-                node.frame.config(bg="white")
-        self.selected_nodes.clear()
 
-        nodeFuntion = self.class_NodeFunction()
-        nodeFuntion.nodeDetailView=self.nodeDetailView
-        # Optionally, update the UI to reflect the reset
-        nodeFuntion.updateDetailUI()
-        if self.nodeDetailView is not None:
-            self.nodeDetailView.node = nodeFuntion
-
+        self.is_double_click_drag = True
+        self.last_drag_pos = (event.x, event.y)
+        self.select_start = None  # 선택 박스를 그리지 않도록
     def add_node(self, node_class, x1=50, y1=50, x2=150, y2=100):
 
         # Create a new Node instance with multiple input and output pins
@@ -308,6 +298,9 @@ class NodeView(tk.Frame):
             self.selected_pin = {"input": None, "output": None}
 
     def on_canvas_press(self, event):
+        # 더블 클릭 드래그 모드일 때는 선택 박스를 시작하지 않음
+        if self.is_double_click_drag:
+            return
         # Start selection rectangle
         self.select_start = (event.x, event.y)
         if self.select_rect_id is not None:
@@ -315,8 +308,15 @@ class NodeView(tk.Frame):
             self.select_rect_id = None
 
     def on_canvas_drag(self, event):
+        # 더블 클릭 후 드래그: 모든 노드 이동
+        if self.is_double_click_drag and self.last_drag_pos:
+            dx = event.x - self.last_drag_pos[0]
+            dy = event.y - self.last_drag_pos[1]
+            for node in self.nodes.values():
+                node.move(dx, dy)
+            self.last_drag_pos = (event.x, event.y)
         # Draw selection rectangle
-        if self.select_start:
+        elif self.select_start:
             x0, y0 = self.select_start
             x1, y1 = event.x, event.y
             if self.select_rect_id is not None:
@@ -351,10 +351,17 @@ class NodeView(tk.Frame):
                     node.set_selected(True)
                     self.selected_nodes[node_id] = node
                     # Change node frame color to blue for selected
-                    node.frame.config(bg="blue")
+                    # node.frame.config(bg="blue")
             # If none selected, clear selected_nodes
             if not self.selected_nodes:
                 self.selected_nodes = {}
+        # 더블 클릭 드래그 모드 종료
+        if self.is_double_click_drag:
+            print("모든 노드 이동 모드 종료")
+            self.is_double_click_drag = False
+            self.last_drag_pos = None
+        print(self.selected_nodes)
+        self.updateSelectedNode()
 
     def on_canvas_right_click(self, event):
         # Detect if a connection line was right-clicked and remove it
@@ -364,3 +371,17 @@ class NodeView(tk.Frame):
                 if connection.line_id == item:
                     self.remove_connection_by_line_id(connection.line_id)
                     return  # Only remove one connection per click
+    def updateSelectedNode(self):
+        if not self.nodeDetailView or not hasattr(self.nodeDetailView, 'list_section'):
+            return
+        for widget in self.nodeDetailView.list_section.winfo_children():
+            widget.destroy()
+    
+        selected_nodes_listbox = tk.Listbox(self.nodeDetailView.list_section, height=5)
+        selected_nodes_listbox.pack(fill=tk.X, padx=5, pady=5)
+        # node.priority 기준으로 정렬
+        sorted_nodes = sorted(self.selected_nodes.values(), key=lambda node: getattr(node, 'priority', 0))
+        for node in sorted_nodes:
+            node_name = node.nodeFunction.nodeName
+            node_priority = node.priority
+            selected_nodes_listbox.insert(tk.END, f"{node_priority}: {node_name}")

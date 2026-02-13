@@ -48,16 +48,18 @@ class Request(NodeFunction):
         except Exception:
             data_dict = data
 
-        response = requests.request(method, url, params=params_dict, headers=headers_dict, data=data_dict, allow_redirects=False)
-        # Print HTTP response in raw format
-        status_line = f"HTTP/1.1 {response.status_code} {response.reason}"
-        headers = '\n'.join(f"{k}: {v}" for k, v in response.headers.items())
+        try:
+            response = requests.request(method, url, params=params_dict, headers=headers_dict, data=data_dict, allow_redirects=False, verify=False)
+        except requests.exceptions.SSLError:
+            # Retry with HTTP if HTTPS fails
+            if url.startswith("https://"):
+                url = url.replace("https://", "http://", 1)
+            response = requests.request(method, url, params=params_dict, headers=headers_dict, data=data_dict, allow_redirects=False, verify=False)
+        
         # Extract cookies as a dictionary
         cookie_dict = requests.utils.dict_from_cookiejar(response.cookies)
-        # Extract redirect URL if present and make it a full URL
+        # Extract redirect URL if present
         redirect_url = response.headers.get('Location', '')
-        if redirect_url and not redirect_url.lower().startswith(('http://', 'https://')):
-            redirect_url = urljoin(url, redirect_url)
         self.outputs = {
             "response": response.text,
             "cookie": cookie_dict,

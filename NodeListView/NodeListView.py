@@ -121,9 +121,9 @@ class NodeListView(tk.Frame):
                         print(f"Error deleting {filename}: {e}")
 
     def buttonEvents(self):
-        self.tree.bind("<Double-1>", self.on_item_double_click)
+        self.tree.bind("<Double-1>", self.on_item_double_click, add="+")
         # Bind right-click event for context menu
-        self.tree.bind("<Button-3>", self.show_context_menu)
+        self.tree.bind("<Button-3>", self.show_context_menu, add="+")
         # Create context menu
         self.context_menu = tk.Menu(self, tearoff=0)
         self.context_menu.add_command(label="삭제", command=self.delete_selected_item)

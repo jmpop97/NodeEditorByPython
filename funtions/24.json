@@ -1,0 +1,301 @@
+{
+  "name": "test",
+  "desc": "test1",
+  "nodes": [
+    {
+      "node_id": 0,
+      "className": "BurfNode",
+      "nodeName": "burf suite",
+      "description": "burf suite",
+      "values": {
+        "text": {
+          "value": "POST /member/login HTTP/2\nHost: hyeseong.net\nCookie: cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=eyJjc3JmX3Rva2VuIjogImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAifQ.aY7G7A.hcyoYEyfWX7HF_dxTbCtzvKvZIw\nContent-Length: 128\nCache-Control: max-age=0\nSec-Ch-Ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nSec-Ch-Ua-Mobile: ?0\nSec-Ch-Ua-Platform: \"Windows\"\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: https://hyeseong.net\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nReferer: https://hyeseong.net/member/login\nAccept-Encoding: gzip, deflate, br\nPriority: u=0, i\n\ncsrf_token=ImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAi.aY7HpQ.TexLDDlmrZ_4DrpxUMQzjzhKKpY&email=testid&pass=testpwd",
+          "display": true
+        }
+      },
+      "outputs": {
+        "method": "POST",
+        "url": "https://hyeseong.net/member/login",
+        "param": {},
+        "headers": {
+          "Host": "hyeseong.net",
+          "Cookie": "cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=eyJjc3JmX3Rva2VuIjogImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAifQ.aY7G7A.hcyoYEyfWX7HF_dxTbCtzvKvZIw",
+          "Content-Length": "128",
+          "Cache-Control": "max-age=0",
+          "Sec-Ch-Ua": "\"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+          "Sec-Ch-Ua-Mobile": "?0",
+          "Sec-Ch-Ua-Platform": "\"Windows\"",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+          "Origin": "https://hyeseong.net",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Upgrade-Insecure-Requests": "1",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "Sec-Fetch-Site": "same-origin",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-User": "?1",
+          "Sec-Fetch-Dest": "document",
+          "Referer": "https://hyeseong.net/member/login",
+          "Accept-Encoding": "gzip, deflate, br",
+          "Priority": "u=0, i"
+        },
+        "data": "csrf_token=ImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAi.aY7HpQ.TexLDDlmrZ_4DrpxUMQzjzhKKpY&email=testid&pass=testpwd"
+      },
+      "coords": [
+        287,
+        44,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 1,
+      "className": "Request",
+      "nodeName": "Request",
+      "description": "Request",
+      "values": {
+        "method": {
+          "value": "POST",
+          "display": true,
+          "type": "text"
+        },
+        "url": {
+          "value": "https://hyeseong.net/member/login",
+          "display": true,
+          "type": "text"
+        },
+        "param": {
+          "value": {},
+          "display": true,
+          "type": "text"
+        },
+        "headers": {
+          "value": {
+            "Host": "hyeseong.net",
+            "Cookie": "cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=eyJjc3JmX3Rva2VuIjogImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAifQ.aY7G7A.hcyoYEyfWX7HF_dxTbCtzvKvZIw",
+            "Content-Length": "128",
+            "Cache-Control": "max-age=0",
+            "Sec-Ch-Ua": "\"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": "\"Windows\"",
+            "Accept-Language": "ko-KR,ko;q=0.9",
+            "Origin": "https://hyeseong.net",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-User": "?1",
+            "Sec-Fetch-Dest": "document",
+            "Referer": "https://hyeseong.net/member/login",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Priority": "u=0, i"
+          },
+          "display": true,
+          "type": "text"
+        },
+        "data": {
+          "value": "csrf_token=ImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAi.aY7HpQ.TexLDDlmrZ_4DrpxUMQzjzhKKpY&email=testid&pass=testpwd",
+          "display": true,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "response": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/member/login\">/member/login</a>. If not, click the link.\n<a href=\"https://hyeseong.net/cdn-cgi/content?id=Bex__LZwvmp4wrxOEk68RLmma2xxkse3cMK0SMQsS.I-1770966285.9899316-1.0.1.1-IjCYOirVo0U4.ZHZLLEzvEllxAyhHUaT6wmqiQs.PcU\" aria-hidden=\"true\" rel=\"nofollow noopener\" style=\"display: none !important; visibility: hidden !important\"></a><script defer src=\"https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015\" integrity=\"sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==\" data-cf-beacon='{\"version\":\"2024.11.0\",\"token\":\"d05e7166c5d04375893ffd4e860d81d5\",\"r\":1,\"server_timing\":{\"name\":{\"cfCacheStatus\":true,\"cfEdge\":true,\"cfExtPri\":true,\"cfL4\":true,\"cfOrigin\":true,\"cfSpeedBrain\":true},\"location_startswith\":null}}' crossorigin=\"anonymous\"></script>\n",
+        "cookie": {
+          "session": ".eJwdjEsKwzAMRK9itC7FseVfr9KEoMh2Cy0p5LMKuXutbEaaedIcwOtSx-33KTM8FLBhGzJ6HyftrDfeWSIMsYaUa6hGh9LVShpuCsb6pfVd1vb3PEBtMiHT_CqL4H7nELDfJ3J47aya8Z1uahKKKSictUQcY79nb5tSSxpmb1hAJ0dJqjjxBRxSUzM5qeIoWvAOwzmcf3kLP5Y.aY7NDg.4HwaOrRl_Lv4yuOrLN34n8awM1c"
+        },
+        "redirect_url": "/member/login",
+        "status_code": 302
+      },
+      "coords": [
+        36,
+        194,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 2,
+      "className": "TextNode",
+      "nodeName": "text",
+      "description": "text",
+      "values": {
+        "text": {
+          "value": "POST /member/login HTTP/2\nHost: hyeseong.net\nCookie: cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=eyJjc3JmX3Rva2VuIjogImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAifQ.aY7G7A.hcyoYEyfWX7HF_dxTbCtzvKvZIw\nContent-Length: 128\nCache-Control: max-age=0\nSec-Ch-Ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nSec-Ch-Ua-Mobile: ?0\nSec-Ch-Ua-Platform: \"Windows\"\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: https://hyeseong.net\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nReferer: https://hyeseong.net/member/login\nAccept-Encoding: gzip, deflate, br\nPriority: u=0, i\n\ncsrf_token=ImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAi.aY7HpQ.TexLDDlmrZ_4DrpxUMQzjzhKKpY&email=testid&pass=testpwd",
+          "display": false,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "text": "POST /member/login HTTP/2\nHost: hyeseong.net\nCookie: cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=eyJjc3JmX3Rva2VuIjogImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAifQ.aY7G7A.hcyoYEyfWX7HF_dxTbCtzvKvZIw\nContent-Length: 128\nCache-Control: max-age=0\nSec-Ch-Ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nSec-Ch-Ua-Mobile: ?0\nSec-Ch-Ua-Platform: \"Windows\"\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: https://hyeseong.net\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nReferer: https://hyeseong.net/member/login\nAccept-Encoding: gzip, deflate, br\nPriority: u=0, i\n\ncsrf_token=ImMyYzM3ZDQ2NjhiMDUzNjI2NTNhYTQ3OGY3OWRmN2YyMDdlMWZmYTAi.aY7HpQ.TexLDDlmrZ_4DrpxUMQzjzhKKpY&email=testid&pass=testpwd"
+      },
+      "coords": [
+        49,
+        53,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 3,
+      "className": "TextNode",
+      "nodeName": "text",
+      "description": "text",
+      "values": {
+        "pass": {
+          "value": "",
+          "display": true,
+          "type": "int"
+        },
+        "text": {
+          "value": "GET /board/lists HTTP/2\nHost: hyeseong.net\nCookie: cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=.eJwdjEsKwzAMRK9itC7FseVfr9KEoMh2Cy0p5LMKuXutbEaaedIcwOtSx-33KTM8FLBhGzJ6HyftrDfeWSIMsYaUa6hGh9LVShpuCsb6pfVd1vb3PEBtMiHT_CqL4H7nELDfJ3J47aya8Z1uahKKKSictUQcY79nb5tSSxpmb1hAJ0dJqjjxBRxSUzM5qeIoWvAOwzmcf3kLP5Y.aY7MiQ.SDKqVD7Dqfz8ibzAtZfD08zchFQ\nCache-Control: max-age=0\nAccept-Language: ko-KR,ko;q=0.9\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nSec-Ch-Ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nSec-Ch-Ua-Mobile: ?0\nSec-Ch-Ua-Platform: \"Windows\"\nReferer: https://hyeseong.net/member/login\nAccept-Encoding: gzip, deflate, br\nPriority: u=0, i",
+          "display": false,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "text": "GET /board/lists HTTP/2\nHost: hyeseong.net\nCookie: cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=.eJwdjEsKwzAMRK9itC7FseVfr9KEoMh2Cy0p5LMKuXutbEaaedIcwOtSx-33KTM8FLBhGzJ6HyftrDfeWSIMsYaUa6hGh9LVShpuCsb6pfVd1vb3PEBtMiHT_CqL4H7nELDfJ3J47aya8Z1uahKKKSictUQcY79nb5tSSxpmb1hAJ0dJqjjxBRxSUzM5qeIoWvAOwzmcf3kLP5Y.aY7MiQ.SDKqVD7Dqfz8ibzAtZfD08zchFQ\nCache-Control: max-age=0\nAccept-Language: ko-KR,ko;q=0.9\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nSec-Ch-Ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nSec-Ch-Ua-Mobile: ?0\nSec-Ch-Ua-Platform: \"Windows\"\nReferer: https://hyeseong.net/member/login\nAccept-Encoding: gzip, deflate, br\nPriority: u=0, i"
+      },
+      "coords": [
+        62,
+        358,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 4,
+      "className": "BurfNode",
+      "nodeName": "burf suite",
+      "description": "burf suite",
+      "values": {
+        "text": {
+          "value": "GET /board/lists HTTP/2\nHost: hyeseong.net\nCookie: cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=.eJwdjEsKwzAMRK9itC7FseVfr9KEoMh2Cy0p5LMKuXutbEaaedIcwOtSx-33KTM8FLBhGzJ6HyftrDfeWSIMsYaUa6hGh9LVShpuCsb6pfVd1vb3PEBtMiHT_CqL4H7nELDfJ3J47aya8Z1uahKKKSictUQcY79nb5tSSxpmb1hAJ0dJqjjxBRxSUzM5qeIoWvAOwzmcf3kLP5Y.aY7MiQ.SDKqVD7Dqfz8ibzAtZfD08zchFQ\nCache-Control: max-age=0\nAccept-Language: ko-KR,ko;q=0.9\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nSec-Ch-Ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nSec-Ch-Ua-Mobile: ?0\nSec-Ch-Ua-Platform: \"Windows\"\nReferer: https://hyeseong.net/member/login\nAccept-Encoding: gzip, deflate, br\nPriority: u=0, i",
+          "display": true
+        }
+      },
+      "outputs": {
+        "method": "GET",
+        "url": "https://hyeseong.net/board/lists",
+        "param": {},
+        "headers": {
+          "Host": "hyeseong.net",
+          "Cookie": "cf_clearance=UQsWdEvQyi5CgKwo1bmYx0GfAIWAJWU9UnNwOKLlMKA-1770964666-1.2.1.1-HiNPpsQjQx5IvRlX6fuNWOFxX8H1W7_mcmxN5Th2JRbmOFHhHw3b.uLdrbtl5tW9FubAaWViC99_pt1fbpbLfJvH8ba.zUFpcVzVlVR47NaHaxQl6FQ_amOHXmiB4tixRs0TazpkGN59YGzBJ96wqXLe.sgaSXSX_ZsBYCpYj6ki85IMf7qjbTG2r0xG4PfN9dqz0XOJYLeZayNgwvlajHWNXBTPzyrf__67w6oyP1A; session=.eJwdjEsKwzAMRK9itC7FseVfr9KEoMh2Cy0p5LMKuXutbEaaedIcwOtSx-33KTM8FLBhGzJ6HyftrDfeWSIMsYaUa6hGh9LVShpuCsb6pfVd1vb3PEBtMiHT_CqL4H7nELDfJ3J47aya8Z1uahKKKSictUQcY79nb5tSSxpmb1hAJ0dJqjjxBRxSUzM5qeIoWvAOwzmcf3kLP5Y.aY7MiQ.SDKqVD7Dqfz8ibzAtZfD08zchFQ",
+          "Cache-Control": "max-age=0",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+          "Upgrade-Insecure-Requests": "1",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "Sec-Fetch-Site": "same-origin",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-User": "?1",
+          "Sec-Fetch-Dest": "document",
+          "Sec-Ch-Ua": "\"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+          "Sec-Ch-Ua-Mobile": "?0",
+          "Sec-Ch-Ua-Platform": "\"Windows\"",
+          "Referer": "https://hyeseong.net/member/login",
+          "Accept-Encoding": "gzip, deflate, br",
+          "Priority": "u=0, i"
+        },
+        "data": ""
+      },
+      "coords": [
+        266,
+        364,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 5,
+      "className": "Request",
+      "nodeName": "Request",
+      "description": "Request",
+      "values": {
+        "method": {
+          "value": "",
+          "display": true,
+          "type": "text"
+        },
+        "url": {
+          "value": "",
+          "display": true,
+          "type": "text"
+        },
+        "param": {
+          "value": "",
+          "display": true,
+          "type": "text"
+        },
+        "headers": {
+          "value": "",
+          "display": true,
+          "type": "text"
+        },
+        "data": {
+          "value": "",
+          "display": true,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "response": "",
+        "cookie": "",
+        "redirect_url": "",
+        "status_code": 0
+      },
+      "coords": [
+        103,
+        510,
+        150,
+        100
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "method",
+      "input_label": "method"
+    },
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "url",
+      "input_label": "url"
+    },
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "param",
+      "input_label": "param"
+    },
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "headers",
+      "input_label": "headers"
+    },
+    {
+      "output_node_id": 0,
+      "input_node_id": 1,
+      "output_label": "data",
+      "input_label": "data"
+    },
+    {
+      "output_node_id": 2,
+      "input_node_id": 0,
+      "output_label": "text",
+      "input_label": "text"
+    },
+    {
+      "output_node_id": 3,
+      "input_node_id": 4,
+      "output_label": "text",
+      "input_label": "text"
+    }
+  ]
+}

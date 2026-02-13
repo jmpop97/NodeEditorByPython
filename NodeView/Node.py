@@ -13,10 +13,12 @@ class NodeBlock:
         self.priority = node_id = self.parent.node_num = parent.node_num + 1
         self.node_id = node_id
 
-        self.frame = frame = tk.Frame(parent.canvas.master, bg="white", highlightbackground="white", highlightthickness=3)
+        # self.frame = frame = tk.Frame(parent.canvas.master, bg="white", highlightbackground="white", highlightthickness=3)
+        self.frame = frame = tk.Frame(parent.canvas.master, bg="white")
         self.frame_window = parent.canvas.create_window(x, y, anchor="nw", window=frame, width=width, height=height)
         self.content_frame = tk.Frame(frame, bg="white")
         self.content_frame.pack(fill=tk.BOTH, expand=True)
+        self._add_event(frame)
 
         
         # Add a content_frame inside self.frame to hold all widgets
@@ -31,7 +33,6 @@ class NodeBlock:
         # Add a stretchable empty column to push buttons to the right
         self.button_frame.grid_columnconfigure(0, weight=1)
         self.button_frame_widgets=NodeButtonFrame(button_frame,nodeFunction.nodeName,self)
-        self._add_event(self.button_frame)
         self.stop_button_state = False  # False: gray, True: red
 
         self.function_frame = tk.Frame(self.content_frame, bg="white")
@@ -71,22 +72,34 @@ class NodeBlock:
             self.parent.selected_nodes.clear()
             self.set_selected(True)
             self.parent.selected_nodes[self.node_id] = self
-            self.frame.config(bg="blue")
+            # self.frame.config(bg="blue")
 
     def on_stop(self, event):
         # Toggle stop button color between gray and red
         self.stop_button_state = not self.stop_button_state
-        color = "red"
-        self.parent.canvas.itemconfig(self.stop_button, fill=color)
+        color = "red" if self.stop_button_state else "gray"
+        # Change the background color of the stop button directly
+        self.button_frame_widgets.stop_button.config(bg=color)
 
 
     def set_selected(self, selected: bool):
         self.selected = selected
+        canvas = self.parent.canvas
+        x, y, width, height = self.rectPoint
         if selected:
-            # Apply blue border to self.frame itself
-            self.frame.config(highlightbackground="blue", highlightthickness=3)
+            # Draw a blue border rectangle on the canvas
+            if self.selection_border_id is not None:
+                canvas.delete(self.selection_border_id)
+            self.selection_border_id = canvas.create_rectangle(
+                x - 2, y - 2, x + width + 2, y + height + 2,
+                outline="blue", width=3
+            )
+            canvas.tag_raise(self.selection_border_id)
         else:
-            self.frame.config(highlightbackground="white", highlightthickness=3)
+            # Remove the border rectangle
+            if self.selection_border_id is not None:
+                canvas.delete(self.selection_border_id)
+                self.selection_border_id = None
 
     def get_coords(self):
         x, y, width, height = self.rectPoint
@@ -146,6 +159,8 @@ class NodeBlock:
         while play_functions:
             # Pop node with smallest priority
             node = min(play_functions, key=lambda n: play_functions[n])
+            if node.stop_button_state:
+                break
             print(node.nodeFunction.nodeName)
             _ = play_functions.pop(node)
             outputValues = node.nodeFunction.functions() # type: ignore
@@ -164,7 +179,8 @@ class NodeBlock:
                 # Add input_node to play_functions if not already in play_functions
                 if add_node:
                     play_functions[input_node] = input_node.priority
-        self.parent.selected_node.nodeFunction.outputUI()
+        if self.parent.selected_node:
+            self.parent.selected_node.nodeFunction.outputUI()
     def create_pins(self, canvas):
         self.pins={
             "input_pin":{},
@@ -192,7 +208,7 @@ class NodeBlock:
             pin_x2, pin_y2 = x1 + 5, y + 5
             pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
             text = canvas.create_text(pin_x1 - 20, pin_y2, anchor="e", text=label)
-            canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
+            canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label), add="+")
             self.pins["input_pin"][label] = (pin, text, num)
         elif pin_type == "output":
             x2 = x + width+5  # output은 x+width
@@ -202,7 +218,7 @@ class NodeBlock:
             pin_x2, pin_y2 = x2 + 5, y + 5
             pin = canvas.create_oval(pin_x1, pin_y1, pin_x2, pin_y2, fill="white")
             text = canvas.create_text(pin_x2 + 20, pin_y2, anchor="w", text=label)
-            canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label))
+            canvas.tag_bind(pin, "<Button-1>", lambda event, pin=pin, pin_type=pin_type, label=label: self.on_pin_click(pin, pin_type, label), add="+")
             self.pins["output_pin"][label] = (pin, text, num)
         else:
             pin = None
@@ -241,9 +257,9 @@ class NodeBlock:
                 return i
         return i
     def _add_event(self, widget):
-        widget.bind("<ButtonPress-1>", self._on_frame_press)
-        widget.bind("<ButtonRelease-1>", self._on_frame_release)
-        widget.bind("<B1-Motion>", self._on_frame_drag)
+        widget.bind("<ButtonPress-1>", self._on_frame_press, add="+")
+        widget.bind("<ButtonRelease-1>", self._on_frame_release, add="+")
+        widget.bind("<B1-Motion>", self._on_frame_drag, add="+")
     def _on_frame_press(self, event):
         if not self.parent.selected_node == self:
             self.update_selected_node()
@@ -262,13 +278,14 @@ class NodeBlock:
     def _on_frame_release(self, event):
         # 드래그가 아니면(즉 클릭)만 선택 처리
         if not self._drag_data.get("moved", False):
+
             ctrl_pressed = (event.state & 0x0004) != 0  # Ctrl 키 체크
             if ctrl_pressed:
                 self.select(ctrl=True)
             else:
                 self.select(ctrl=False)
+        self.parent.updateSelectedNode()
     def _on_frame_drag(self, event):
-
         # 마우스가 눌린 위치와 현재 위치의 차이 계산
         dx = event.x - self._drag_data["x"]
         dy = event.y - self._drag_data["y"]
@@ -296,6 +313,9 @@ class NodeFunction:
         }
         self.block : Optional[NodeBlock] = None
         self.nodeDetailView: Optional[NodeDetailView] = None
+        self.nodeUI_widget={
+            # "key":widget
+        }
     def functions(self):
         # return []
         pass
@@ -304,10 +324,15 @@ class NodeFunction:
         self.inputUI()
         self.outputUI()
     def nameUI(self):
-        self.nodeDetailView.node_name_textbox.delete(0, tk.END)
-        self.nodeDetailView.node_name_textbox.insert(0, self.nodeName)
-        self.nodeDetailView.description_textbox.delete(0, tk.END)
-        self.nodeDetailView.description_textbox.insert(0, self.description)
+        nodeDetailView=self.nodeDetailView
+        nodeDetailView.node_name_textbox.delete(0, tk.END)
+        nodeDetailView.node_name_textbox.insert(0, self.nodeName)
+        nodeDetailView.description_textbox.delete(0, tk.END)
+        nodeDetailView.description_textbox.insert(0, self.description)
+
+        priority=self.block.priority if self.block else ""
+        nodeDetailView.priority_textbox.delete(0,tk.END)
+        nodeDetailView.priority_textbox.insert(0, priority)
     def inputUI(self):
         for widget in self.nodeDetailView.middle_section.winfo_children():
             widget.destroy()
@@ -337,87 +362,93 @@ class NodeFunction:
             self.nodeDetailView.value_widgets[key] = (text_widget, check_var)
 
     def _create_int_widget(self, text_frame, key, value):
-        text_widget = tk.Entry(text_frame, width=8)
+        text_widget = tk.Spinbox(text_frame, from_=0, to=100, width=8)
+        text_widget.delete(0, tk.END)
         text_widget.insert(0, str(value.get("value", "")))
         text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        def on_entry_change(event, key=key, text_widget=text_widget):
-            if self.nodeDetailView.node:
-                try:
-                    v = int(text_widget.get())
-                except ValueError:
-                    v = 0
-                self.nodeDetailView.update_node_value(key, v)
-        text_widget.bind("<KeyRelease>", on_entry_change)
-        return text_widget
 
+        text_widget.bind("<KeyRelease>", lambda event, k=key, w=text_widget: self.on_int_spinbox_change(k, w), add="+")
+        text_widget.bind("<ButtonRelease>", lambda event, k=key, w=text_widget: self.on_int_spinbox_change(k, w), add="+")
+        return text_widget
+    
+    def on_int_spinbox_change(self, key, text_widget):
+        
+        v = int(text_widget.get())
+        print()
+        self.values[key]["value"]=v
+        return v
     def _create_str_widget(self, text_frame, key, value):
         text_widget = tk.Text(text_frame, height=1, wrap="none")
         text_widget.insert("1.0", value.get("value", ""))
         text_widget.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_text_change(event, key, text_widget, self.nodeDetailView))
+        text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_text_change(event, key, text_widget, self.nodeDetailView), add="+")
         return text_widget
 
     def _create_list_widget(self, text_frame, key, value):
         list_values = value.get("value", [])
         # Listbox on top
-        listbox = tk.Listbox(text_frame, height=min(5, len(list_values)), selectmode=tk.SINGLE)
+        listbox = tk.Listbox(text_frame, height=5, selectmode=tk.SINGLE)
         for item in list_values:
             listbox.insert(tk.END, item)
         n = value.get('n', 0)
-        if 0 <= n < len(list_values):
-            listbox.selection_set(n)
-            listbox.see(n)
+        listbox.selection_set(n)
+        listbox.activate(n)
+        listbox.see(n)
         listbox.pack(side=tk.TOP, fill=tk.X, expand=True)
+        listbox.bind("<<ListboxSelect>>",self.on_listbox_select, add="+")
+        
+
+        listbox.bind("<Button-3>", lambda event, key=key, listbox=listbox: self.on_listbox_right_click(listbox.nearest(event.y)), add="+")
 
         # Add frame below the listbox
         add_frame = tk.Frame(text_frame, bg="lightyellow")
         add_frame.pack(side=tk.TOP, fill=tk.X, padx=2, pady=(2,0))
         add_entry = tk.Entry(add_frame, width=8)
         add_entry.pack(side=tk.LEFT)
-        def on_add_item(event=None, key=key, listbox=listbox, add_entry=add_entry):
-            new_item = add_entry.get()
-            if new_item:
-                self.values[key]["value"].append(new_item)
-                listbox.insert(tk.END, new_item)
-                add_entry.delete(0, tk.END)
-                if self.nodeDetailView and hasattr(self.nodeDetailView, 'update_list_value'):
-                    self.nodeDetailView.update_list_value(key, new_item, len(self.values[key]["value"]) - 1)
-        add_button = tk.Button(add_frame, text="+", command=on_add_item, bg="lightyellow")
+        add_button = tk.Button(add_frame, text="+", command=lambda key=key, listbox=listbox, add_entry=add_entry: self.on_listbox_add_item(key, listbox, add_entry), bg="lightyellow")
         add_button.pack(side=tk.LEFT)
-        add_entry.bind("<Return>", on_add_item)
 
-        listbox.bind("<<ListboxSelect>>", lambda event, key=key, listbox=listbox: self.on_listbox_select(event, key, listbox))
 
-        # Right-click (Button-3) to delete item
-        def on_right_click(event, key=key, listbox=listbox):
-            try:
-                index = listbox.nearest(event.y)
-                if index >= 0:
-                    item = listbox.get(index)
-                    # Remove from Listbox
-                    listbox.delete(index)
-                    # Remove from self.values[key]["value"]
-                    if index < len(self.values[key]["value"]):
-                        del self.values[key]["value"][index]
-                        # Optionally update nodeDetailView
-                        if self.nodeDetailView and hasattr(self.nodeDetailView, 'update_list_value'):
-                            self.nodeDetailView.update_list_value(key, None, index)
-            except Exception as e:
-                print(f"Error deleting list item: {e}")
 
-        listbox.bind("<Button-3>", on_right_click)
+        add_entry.bind("<Return>", lambda event, key=key, listbox=listbox, add_entry=add_entry: self.on_listbox_entry_key(event, key, listbox, add_entry), add="+")
+        add_entry.bind("<Shift-Return>", lambda event, key=key, listbox=listbox, add_entry=add_entry: self.on_listbox_entry_key(event, key, listbox, add_entry), add="+")
 
         return listbox
 
-    def on_listbox_select(self, event, key, listbox):
-        selection = listbox.curselection()
-        if selection:
-            index = selection[0]
-            selected_value = listbox.get(index)
-            self.values[key]["selected"] = selected_value
-            self.values[key]["n"] = index
-            if self.nodeDetailView and hasattr(self.nodeDetailView, 'update_list_value'):
-                self.nodeDetailView.update_list_value(key, selected_value, index)
+    def on_listbox_entry_key(self, event, key, listbox, add_entry):
+        if event.keysym == "Return" and not (event.state & 0x0001):  # Enter only
+            self.on_listbox_add_item(key, listbox, add_entry)
+            return "break"
+        elif event.keysym == "Return" and (event.state & 0x0001):  # Shift+Enter
+            # Insert newline at cursor
+            idx = add_entry.index(tk.INSERT)
+            current = add_entry.get()
+            add_entry.delete(0, tk.END)
+            add_entry.insert(0, current[:idx] + "\n" + current[idx:])
+            add_entry.icursor(idx + 1)
+            return "break"
+    def on_listbox_right_click(self, index):
+        # Remove the item at the given index from the list value
+        (listbox,_)=self.nodeDetailView.value_widgets["list"]
+        value_list = self.values["list"]["value"]
+        value_list.pop(index)
+        listbox.delete(index)
+    def on_listbox_add_item(self, key=None, listbox=None, add_entry=None):
+        new_item = add_entry.get()
+        self.values[key]["value"].append(new_item)
+        listbox.insert(tk.END, new_item)
+        add_entry.delete(0, tk.END)
+        return new_item
+    def on_listbox_select(self, event):
+        src = event.widget
+        if not src.curselection():
+            return src ,None
+
+        index = src.curselection()[0]
+        if self.values["list"]["n"] == index:
+            return src , None
+        self.values["list"]["n"] = index
+        return src,index
 
     def _create_default_widget(self, text_frame, key, value):
         text_widget = tk.Text(text_frame, height=5, wrap="none")
@@ -430,8 +461,8 @@ class NodeFunction:
         text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         def _resize_text(event, text_widget=text_widget):
             text_widget.config(width=max(10, int(text_widget.winfo_width() / 8)), height=5)
-        text_frame.bind("<Configure>", _resize_text)
-        text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_text_change(event, key, text_widget, self.nodeDetailView))
+        text_frame.bind("<Configure>", _resize_text, add="+")
+        text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_text_change(event, key, text_widget, self.nodeDetailView), add="+")
         return text_widget
     def outputUI(self):
         for widget in self.nodeDetailView.bottom_section.winfo_children():
@@ -463,14 +494,13 @@ class NodeFunction:
             text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             def _resize_text(event, text_widget=text_widget):
                 text_widget.config(width=max(10, int(text_widget.winfo_width() / 8)), height=5)
-            text_frame.bind("<Configure>", _resize_text)
-            text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_result_change(event, key, text_widget, self.nodeDetailView))
+            text_frame.bind("<Configure>", _resize_text, add="+")
+            text_widget.bind("<KeyRelease>", lambda event, key=key, text_widget=text_widget: self.on_result_change(event, key, text_widget, self.nodeDetailView), add="+")
             self.nodeDetailView.output_widgets[key] = text_widget
 
     def on_text_change(self, event, key, text_widget, nodeDetailView):
         value = text_widget.get("1.0", tk.END).rstrip("\n")
         self.values[key]["value"] = value
-        nodeDetailView.update_node_value(key, value)
     def on_result_change(self, event, key, text_widget, nodeDetailView):
         value = text_widget.get("1.0", tk.END).rstrip("\n")
         self.outputs[key]= value

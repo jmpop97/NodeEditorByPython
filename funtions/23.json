@@ -1,0 +1,345 @@
+{
+  "name": "hack",
+  "desc": "BF - 로그인 횟수 제한 * 10",
+  "nodes": [
+    {
+      "node_id": 0,
+      "className": "Log",
+      "nodeName": "Log",
+      "description": "Log",
+      "values": {
+        "tag": {
+          "value": [
+            "sql",
+            "response",
+            "cookie",
+            "redirect_url",
+            "status_code"
+          ],
+          "display": false,
+          "type": "list"
+        },
+        "list": {
+          "value": [
+            "testpwd1'and'1'='1",
+            "",
+            {},
+            "main.php",
+            302
+          ],
+          "display": true,
+          "type": "list"
+        }
+      },
+      "outputs": {
+        "list": []
+      },
+      "coords": [
+        389,
+        393,
+        300,
+        300
+      ]
+    },
+    {
+      "node_id": 1,
+      "className": "BurfNode",
+      "nodeName": "burf suite",
+      "description": "burf suite",
+      "values": {
+        "text": {
+          "value": "POST /case1/main.php HTTP/1.1\nHost: 127.0.0.1:5555\nContent-Length: 18\nCache-Control: max-age=0\nsec-ch-ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nsec-ch-ua-mobile: ?0\nsec-ch-ua-platform: \"Windows\"\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: http://127.0.0.1:5555\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nReferer: http://127.0.0.1:5555/case1/main.php\nAccept-Encoding: gzip, deflate, br\nCookie: csrftoken=JLo4pvmpbPBlbFJxFSHnwoi9H8lzsWbD; PHPSESSID=e848d56efd34bb50b4e361858868b4ae\nConnection: keep-alive\n\nid=testid1&pwd=testpwd1",
+          "display": true
+        }
+      },
+      "outputs": {
+        "method": "POST",
+        "url": "https://127.0.0.1:5555/case1/main.php",
+        "param": {},
+        "headers": {
+          "Host": "127.0.0.1:5555",
+          "Content-Length": "18",
+          "Cache-Control": "max-age=0",
+          "sec-ch-ua": "\"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+          "Origin": "http://127.0.0.1:5555",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Upgrade-Insecure-Requests": "1",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "Sec-Fetch-Site": "same-origin",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-User": "?1",
+          "Sec-Fetch-Dest": "document",
+          "Referer": "http://127.0.0.1:5555/case1/main.php",
+          "Accept-Encoding": "gzip, deflate, br",
+          "Cookie": "csrftoken=JLo4pvmpbPBlbFJxFSHnwoi9H8lzsWbD; PHPSESSID=e848d56efd34bb50b4e361858868b4ae",
+          "Connection": "keep-alive"
+        },
+        "data": "id=testid1&pwd=testpwd1"
+      },
+      "coords": [
+        62,
+        217,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 2,
+      "className": "Request",
+      "nodeName": "Request",
+      "description": "Request",
+      "values": {
+        "method": {
+          "value": "POST",
+          "display": true,
+          "type": "text"
+        },
+        "url": {
+          "value": "https://127.0.0.1:5555/case1/main.php",
+          "display": true,
+          "type": "text"
+        },
+        "param": {
+          "value": {},
+          "display": true,
+          "type": "text"
+        },
+        "headers": {
+          "value": {
+            "Host": "127.0.0.1:5555",
+            "Content-Length": "18",
+            "Cache-Control": "max-age=0",
+            "sec-ch-ua": "\"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "Accept-Language": "ko-KR,ko;q=0.9",
+            "Origin": "http://127.0.0.1:5555",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-User": "?1",
+            "Sec-Fetch-Dest": "document",
+            "Referer": "http://127.0.0.1:5555/case1/main.php",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cookie": "csrftoken=JLo4pvmpbPBlbFJxFSHnwoi9H8lzsWbD; PHPSESSID=e848d56efd34bb50b4e361858868b4ae",
+            "Connection": "keep-alive"
+          },
+          "display": true,
+          "type": "text"
+        },
+        "data": {
+          "value": "id=testid1&pwd=testpwd1",
+          "display": true,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "response": "",
+        "cookie": {},
+        "redirect_url": "main.php",
+        "status_code": 302
+      },
+      "coords": [
+        320,
+        228,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 3,
+      "className": "ListCombine",
+      "nodeName": "ListCombine",
+      "description": "ListCombine",
+      "values": {
+        "sql": {
+          "value": "testpwd1'and'1'='1",
+          "display": true,
+          "type": "text"
+        },
+        "response": {
+          "value": "",
+          "display": true,
+          "type": "text"
+        },
+        "cookie": {
+          "value": {},
+          "display": true,
+          "type": "text"
+        },
+        "redirect_url": {
+          "value": "main.php",
+          "display": true,
+          "type": "text"
+        },
+        "status_code": {
+          "value": 302,
+          "display": true,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "list": [
+          "testpwd1'and'1'='1",
+          "",
+          {},
+          "main.php",
+          302
+        ]
+      },
+      "coords": [
+        92,
+        397,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 4,
+      "className": "TextNode",
+      "nodeName": "text",
+      "description": "text",
+      "values": {
+        "pass": {
+          "value": [],
+          "display": true,
+          "type": "int"
+        },
+        "text": {
+          "value": "POST /case1/main.php HTTP/1.1\nHost: 127.0.0.1:5555\nContent-Length: 18\nCache-Control: max-age=0\nsec-ch-ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nsec-ch-ua-mobile: ?0\nsec-ch-ua-platform: \"Windows\"\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: http://127.0.0.1:5555\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nReferer: http://127.0.0.1:5555/case1/main.php\nAccept-Encoding: gzip, deflate, br\nCookie: csrftoken=JLo4pvmpbPBlbFJxFSHnwoi9H8lzsWbD; PHPSESSID=e848d56efd34bb50b4e361858868b4ae\nConnection: keep-alive\n\nid=testid1&pwd=testpwd1",
+          "display": false,
+          "type": "text"
+        }
+      },
+      "outputs": {
+        "text": "POST /case1/main.php HTTP/1.1\nHost: 127.0.0.1:5555\nContent-Length: 18\nCache-Control: max-age=0\nsec-ch-ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nsec-ch-ua-mobile: ?0\nsec-ch-ua-platform: \"Windows\"\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: http://127.0.0.1:5555\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nReferer: http://127.0.0.1:5555/case1/main.php\nAccept-Encoding: gzip, deflate, br\nCookie: csrftoken=JLo4pvmpbPBlbFJxFSHnwoi9H8lzsWbD; PHPSESSID=e848d56efd34bb50b4e361858868b4ae\nConnection: keep-alive\n\nid=testid1&pwd=testpwd1"
+      },
+      "coords": [
+        50,
+        49,
+        150,
+        100
+      ]
+    },
+    {
+      "node_id": 5,
+      "className": "For",
+      "nodeName": "For",
+      "description": "For",
+      "values": {
+        "input": {
+          "value": "POST /case1/main.php HTTP/1.1\nHost: 127.0.0.1:5555\nContent-Length: 18\nCache-Control: max-age=0\nsec-ch-ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nsec-ch-ua-mobile: ?0\nsec-ch-ua-platform: \"Windows\"\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: http://127.0.0.1:5555\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nReferer: http://127.0.0.1:5555/case1/main.php\nAccept-Encoding: gzip, deflate, br\nCookie: csrftoken=JLo4pvmpbPBlbFJxFSHnwoi9H8lzsWbD; PHPSESSID=e848d56efd34bb50b4e361858868b4ae\nConnection: keep-alive\n\nid=testid1&pwd=testpwd1",
+          "display": true,
+          "type": "text"
+        },
+        "tryTime": {
+          "value": 0,
+          "display": false,
+          "type": "int"
+        },
+        "Limit": {
+          "value": 10,
+          "display": false,
+          "type": "int"
+        }
+      },
+      "outputs": {
+        "tryTime": 9,
+        "output": "POST /case1/main.php HTTP/1.1\nHost: 127.0.0.1:5555\nContent-Length: 18\nCache-Control: max-age=0\nsec-ch-ua: \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"\nsec-ch-ua-mobile: ?0\nsec-ch-ua-platform: \"Windows\"\nAccept-Language: ko-KR,ko;q=0.9\nOrigin: http://127.0.0.1:5555\nContent-Type: application/x-www-form-urlencoded\nUpgrade-Insecure-Requests: 1\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7\nSec-Fetch-Site: same-origin\nSec-Fetch-Mode: navigate\nSec-Fetch-User: ?1\nSec-Fetch-Dest: document\nReferer: http://127.0.0.1:5555/case1/main.php\nAccept-Encoding: gzip, deflate, br\nCookie: csrftoken=JLo4pvmpbPBlbFJxFSHnwoi9H8lzsWbD; PHPSESSID=e848d56efd34bb50b4e361858868b4ae\nConnection: keep-alive\n\nid=testid1&pwd=testpwd1"
+      },
+      "coords": [
+        330,
+        69,
+        150,
+        100
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "output_node_id": 1,
+      "input_node_id": 2,
+      "output_label": "method",
+      "input_label": "method"
+    },
+    {
+      "output_node_id": 1,
+      "input_node_id": 2,
+      "output_label": "url",
+      "input_label": "url"
+    },
+    {
+      "output_node_id": 1,
+      "input_node_id": 2,
+      "output_label": "param",
+      "input_label": "param"
+    },
+    {
+      "output_node_id": 1,
+      "input_node_id": 2,
+      "output_label": "headers",
+      "input_label": "headers"
+    },
+    {
+      "output_node_id": 1,
+      "input_node_id": 2,
+      "output_label": "data",
+      "input_label": "data"
+    },
+    {
+      "output_node_id": 2,
+      "input_node_id": 3,
+      "output_label": "response",
+      "input_label": "response"
+    },
+    {
+      "output_node_id": 2,
+      "input_node_id": 3,
+      "output_label": "cookie",
+      "input_label": "cookie"
+    },
+    {
+      "output_node_id": 2,
+      "input_node_id": 3,
+      "output_label": "redirect_url",
+      "input_label": "redirect_url"
+    },
+    {
+      "output_node_id": 2,
+      "input_node_id": 3,
+      "output_label": "status_code",
+      "input_label": "status_code"
+    },
+    {
+      "output_node_id": 3,
+      "input_node_id": 0,
+      "output_label": "list",
+      "input_label": "list"
+    },
+    {
+      "output_node_id": 4,
+      "input_node_id": 5,
+      "output_label": "text",
+      "input_label": "input"
+    },
+    {
+      "output_node_id": 5,
+      "input_node_id": 1,
+      "output_label": "output",
+      "input_label": "text"
+    },
+    {
+      "output_node_id": 0,
+      "input_node_id": 4,
+      "output_label": "list",
+      "input_label": "pass"
+    }
+  ]
+}
